@@ -1,10 +1,10 @@
-// CS30 Project - Grid Based Assignment
+// CS30 Major Project
 // Al Rasid Mamun
 // Jan 6, 2020
 
-
 let images, sounds, strings;
-let gameSetup, states, bulletList;
+let gameSetup, setScore, setTime, setBoolean;
+let states, bulletList;
 let player, enemy = [], bullets = [], coins = [], grid;
 const WIDTH = 1050; const HEIGHT = 750;
 
@@ -61,7 +61,9 @@ function setup() {
     buttonW: 400,
     buttonH: 200,
     respawnBullet: 0,
-    bulletTime: 400
+    bulletTime: 400,
+    respawnEnemy: 0,
+    enemyTime: 4000
   };
 
   // State Values
@@ -74,6 +76,12 @@ function setup() {
   bulletList = new Array();
   bulletList[0] = "fireBall";
   bulletList[1] = "boomerang";
+
+  // Booleans Values
+  setBoolean = {
+    bulletInteract: false,
+    bulletIsCollide: false,
+  };
 }
 
 function draw() {
@@ -164,6 +172,9 @@ function gameRun() { // Runs the game
   makeBullets();
   bulletCollideWithTile();
   removeBullet();
+  // enemyRespawnRandom();
+  // generateEnemy(); 
+  // removeEnemy();
 }
 
 function makeButton() { // Display buttons, if mouse pressed change state
@@ -335,3 +346,50 @@ function bulletCollideWithTile() {
 function makeGrid(){ 
   grid.makeTileMap(grid.cols, grid.rows);
 }
+
+// Make a new enemy every three seconds and push it to array 
+function generateEnemy() {
+  if (millis() > gameSetup.respawnEnemy + gameSetup.enemyTime) {
+    enemy.push(new Enemy(random(width - player.playerX), random(height - player.playerY), player.playerX, player.playerY));  
+    gameSetup.respawnEnemy = millis();
+  }  
+}
+
+// Get Values from enemy class and use them in enemy array
+function enemyRespawnRandom() {
+  for (let i=0; i<enemy.length; i++) {
+    enemy[i].displayEnemy();
+    enemy[i].updatePosition();
+    enemy[i].collideWithTile();
+    enemy[i].interactWithPlayer();
+  } 
+}
+
+// Enemy collide with player, delete enemy
+function removeEnemy() {
+  for (let i=0; i<enemy.length; i++) {
+    if (enemy[i].playerInteract === true) {
+      enemy.splice(i,1);
+    }
+  }
+}
+
+// Check if bullet and enemy collide, if true, delete bullet and enemy that collided
+function checkCollided() {
+  for (let e=0; e<enemy.length; e++) { 
+    for (let b=0; b<bullets.length; b++) {
+      setBoolean.bulletInteract = collideRectRect(enemy[e].enemyX, enemy[e].enemyY, enemy[e].enemySize, enemy[e].enemySize,
+        bullets[b].bulletX, bullets[b].bulletY, bullets[b].radius, bullets[b].radius);
+      if (setBoolean.bulletInteract === true && !setBoolean.bulletIsCollide) {
+        setBoolean.bulletIsCollide = true;
+        bullets.splice(b, 1);
+        enemy.splice(e, 1);
+        setScore.killScore += 1;
+      } 
+      if (setBoolean.bulletIsCollide === true && !setBoolean.bulletInteract) {
+        setBoolean.bulletIsCollide = false;
+      }
+    }
+  }
+}
+

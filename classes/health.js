@@ -1,45 +1,39 @@
-let health = 100;
-let MAX_HEALTH = 100;
-let rectWidth = 200;
-
-function checkColor() {
-  // Change color
-  if (health < 40) {
-    fill(255, 0, 0);
-  } 
-  else if (health < 80) {
-    fill(255, 200, 0);
-  } 
-  else {
-    fill(0, 255, 0);
+class Health {
+  constructor(x, y, health, maxHealth) {
+    this.x = x;
+    this.y = y; 
+    this.rectWidth = 200;
+    this.rectHeight = 25;
+    this.health = health; 
+    this.maxHealth = maxHealth;
   }
-}
+  
+  checkColor() {
+    if (this.health < 40)
+    {
+      fill(255, 0, 0);
+    }  
+    else if (this.health < 80)
+    {
+      fill(255, 200, 0);
+    }
+    else
+    {
+      fill(0, 255, 0);
+    }
+  }
+  
+  drawBar() { // Draw outline of the Bar
+    stroke(0);
+    strokeWeight(4);
+    noFill();
+    rect(this.x, this.y, this.rectWidth, this.rectHeight);
+  }
 
-function drawBar() {
-  // Outline
-  stroke(0);
-  strokeWeight(4);
-  noFill();
-  rect(100, 100, rectWidth, 25);
-}
-
-
-function fillBar() {
-    // Draw bar
+  fillBar() {
   noStroke();
-  // Get fraction 0->1 and multiply it by width of bar
-  let drawWidth = (health / MAX_HEALTH) * rectWidth;
-  rect(100, 100, drawWidth, 25);
-}
-
-
-function keyPressed()
-{
-  if (health > 0 && keyCode === LEFT_ARROW) {
-    health -= 10;
-  }
-  if (health < 100 && keyCode === RIGHT_ARROW) {
-    health += 10;
+  let drawWidth = (this.health / this.maxHealth) * this.rectWidth;
+  rect(this.x, this.y, drawWidth, this.rectHeight);
   }
 }
 

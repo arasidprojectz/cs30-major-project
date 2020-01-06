@@ -5,7 +5,7 @@
 let images, sounds, strings;
 let gameSetup, setScore, setTime, setBoolean;
 let states, bulletList;
-let player, enemy = [], bullets = [], coins = [], grid;
+let player, enemy = [], bullets = [], coins = [], grid, playerHealth;
 const WIDTH = 1050; const HEIGHT = 750;
 
 function preload() {
@@ -50,6 +50,7 @@ function setup() {
   player = new Player(width/2, height/2);
   // Make a new grid
   grid = new Grid();
+  playerHealth = new Health(player.playerX, player.playerY-50, 100, 100);
 
   // Button and Cursor Values
   gameSetup = {
@@ -172,6 +173,7 @@ function gameRun() { // Runs the game
   makeBullets();
   bulletCollideWithTile();
   removeBullet();
+  makeHealthBar();
   // enemyRespawnRandom();
   // generateEnemy(); 
   // removeEnemy();
@@ -393,3 +395,19 @@ function checkCollided() {
   }
 }
 
+// Health Bar 
+function makeHealthBar() {
+  playerHealth.checkColor();
+  playerHealth.fillBar();
+  playerHealth.drawBar();
+}
+
+
+function keyPressed() {
+  if (playerHealth.health > 0 && keyCode === LEFT_ARROW) {
+    playerHealth.health -= 10;
+  }
+  if (playerHealth.health < 100 && keyCode === RIGHT_ARROW) {
+    playerHealth.health += 10;
+  }
+}

@@ -6,10 +6,10 @@ class Enemy {
     this.bulletDistance;
     this.playerInteract = false;
     this.playerIsCollide = false;
-    this.bulletInteract = false;
   }
 
   displayEnemy() {
+    imageMode(CENTER);
     image(images.enemyImg, this.enemyX, this.enemyY, this.enemySize, this.enemySize);
   }
   
@@ -36,7 +36,7 @@ class Enemy {
   interactWithPlayer() {
     this.playerInteract = collideRectRect(this.enemyX, this.enemyY, this.enemySize, this.enemySize, player.playerX, player.playerY, player.playerWidth, player.playerHeight);
     if (this.playerInteract === true && !this.playerIsCollide) {
-      setScore.playerHP -= 1;
+      playerHealthBar.health -= 10;
       this.playerIsCollide = true;
     } 
     if (!this.playerInteract && this.playerIsCollide === true) {

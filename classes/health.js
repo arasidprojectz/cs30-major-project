@@ -1,9 +1,9 @@
 class Health {
-  constructor(x, y, health, maxHealth) {
+  constructor(x, y, rectWidth, rectHeight, health, maxHealth) {
     this.x = x;
     this.y = y; 
-    this.rectWidth = 200;
-    this.rectHeight = 25;
+    this.rectWidth = rectWidth;
+    this.rectHeight = rectHeight;
     this.health = health; 
     this.maxHealth = maxHealth;
   }
@@ -25,15 +25,44 @@ class Health {
   
   drawBar() { // Draw outline of the Bar
     stroke(0);
-    strokeWeight(4);
+    strokeWeight(2);
     noFill();
     rect(this.x, this.y, this.rectWidth, this.rectHeight);
   }
+}
+
+class playerH extends Health {
+  constructor(x, y, health, maxHealth) {
+    super(x, y, 40, 10);
+    this.health = health;
+    this.maxHealth = maxHealth
+  }
+
+  updatePos(x, y) {
+    this.x = x;
+    this.y = y; 
+  }
 
   fillBar() {
-  noStroke();
-  let drawWidth = (this.health / this.maxHealth) * this.rectWidth;
-  rect(this.x, this.y, drawWidth, this.rectHeight);
+    noStroke();
+    let drawWidth = (this.health*this.rectWidth)/this.maxHealth;
+    rect(this.x, this.y, drawWidth, this.rectHeight);
   }
 }
 
+// class enemyH extends Health {
+//   constructor(x, y) {
+//     super(x, y, 40, 10, 100, 100);
+//   }
+
+//   updatePos(x, y) {
+//     this.x = x;
+//     this.y = y; 
+//   }
+
+//   fillBar() {
+//     noStroke();
+//     let drawWidth = (this.health*this.rectWidth)/this.maxHealth;
+//     rect(this.x, this.y, drawWidth, this.rectHeight);
+//   }
+// }

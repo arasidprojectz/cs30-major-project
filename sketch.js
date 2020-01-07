@@ -5,7 +5,8 @@
 let images, sounds, strings;
 let gameSetup, setScore, setTime, setBoolean;
 let states, bulletList;
-let player, enemy = [], bullets = [], coins = [], grid, playerHealth;
+let player, enemy = [], bullets = [], coins = [];
+let playerHealthBar, enemyHealthBar;
 const WIDTH = 1050; const HEIGHT = 750;
 
 function preload() {
@@ -22,6 +23,7 @@ function preload() {
     buttonNH: loadImage("assets/images/button/button_nh.png"),
     playerImg: loadImage("assets/images/players/gunfighter.png"),
     bulletImg: loadImage("assets/images/items/fire_ball.png"),
+    enemyImg: loadImage("assets/images/enemy/enemy.png"),
     boomerangImg: loadImage("assets/images/items/boomerang.png"),
     grassImg: loadImage("assets/images/tiles/grass.png"),
     groundImg: loadImage("assets/images/tiles/ground.jpg"),
@@ -50,7 +52,9 @@ function setup() {
   player = new Player(width/2, height/2);
   // Make a new grid
   grid = new Grid();
-  playerHealth = new Health(player.playerX, player.playerY-50, 100, 100);
+  playerHealthBar = new playerH(player.playerX, player.playerY-15, 100, 100);
+  // enemyHealthBar = new enemyH(enemy.enemyX, enemy.enemyY);
+  
 
   // Button and Cursor Values
   gameSetup = {
@@ -64,7 +68,8 @@ function setup() {
     respawnBullet: 0,
     bulletTime: 400,
     respawnEnemy: 0,
-    enemyTime: 4000
+    enemyTime: 4000,
+    playerHp: 100
   };
 
   // State Values
@@ -171,11 +176,14 @@ function gameRun() { // Runs the game
   makeGrid();
   makePlayer();
   makeBullets();
+  checkCollided();
   bulletCollideWithTile();
   removeBullet();
-  makeHealthBar();
-  // enemyRespawnRandom();
-  // generateEnemy(); 
+  enemyRespawnRandom();
+  generateEnemy(); 
+  makePlayerHealthBarBar();
+  playerHealth();
+  // makeEnemyHealthBarBar();
   // removeEnemy();
 }
 
@@ -320,6 +328,9 @@ function mousePressed() {
       sounds.shootSound.playMode("restart");
     }
   }
+  if (!playerHealthBar.health <= 0) {
+    loop();
+  }
 }
 
 // Delete bullet if at edge of screen 
@@ -362,7 +373,6 @@ function enemyRespawnRandom() {
   for (let i=0; i<enemy.length; i++) {
     enemy[i].displayEnemy();
     enemy[i].updatePosition();
-    enemy[i].collideWithTile();
     enemy[i].interactWithPlayer();
   } 
 }
@@ -385,8 +395,10 @@ function checkCollided() {
       if (setBoolean.bulletInteract === true && !setBoolean.bulletIsCollide) {
         setBoolean.bulletIsCollide = true;
         bullets.splice(b, 1);
-        enemy.splice(e, 1);
-        setScore.killScore += 1;
+        playerHealthBar.health -= 10;
+        if (playerHealthBar.health <= 0) {
+          enemy.splice(e, 1);
+        }
       } 
       if (setBoolean.bulletIsCollide === true && !setBoolean.bulletInteract) {
         setBoolean.bulletIsCollide = false;
@@ -396,18 +408,27 @@ function checkCollided() {
 }
 
 // Health Bar 
-function makeHealthBar() {
-  playerHealth.checkColor();
-  playerHealth.fillBar();
-  playerHealth.drawBar();
+function makePlayerHealthBarBar() {
+  playerHealthBar.checkColor();
+  playerHealthBar.fillBar();
+  playerHealthBar.drawBar();
+  playerHealthBar.updatePos(player.playerX, player.playerY);
+}
+
+function playerHealth() {
+  if (playerHealthBar.health <= 0) {
+    noLoop();
+    playerHealthBar.health = 100;
+  }
 }
 
 
-function keyPressed() {
-  if (playerHealth.health > 0 && keyCode === LEFT_ARROW) {
-    playerHealth.health -= 10;
-  }
-  if (playerHealth.health < 100 && keyCode === RIGHT_ARROW) {
-    playerHealth.health += 10;
-  }
-}
+
+// function makeEnemyHealthBarBar() {
+//   for (let i = 0; i<enemy.length; i++) {
+//     enemyHealthBar.checkColor();
+//     enemyHealthBar.fillBar();
+//     enemyHealthBar.drawBar();
+//     enemyHealthBar.updatePos(enemy[i].enemyX, enemy[i].enemyY);
+//   } 
+// }

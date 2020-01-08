@@ -6,6 +6,7 @@ class Enemy {
     this.bulletDistance;
     this.playerInteract = false;
     this.playerIsCollide = false;
+    this.healthBar = new enemyH(this.enemyX, this.enemyY, 100,100);
   }
 
   displayEnemy() {

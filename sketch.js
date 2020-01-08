@@ -53,7 +53,7 @@ function setup() {
   // Make a new grid
   grid = new Grid();
   playerHealthBar = new playerH(player.playerX, player.playerY-15, 100, 100);
-  // enemyHealthBar = new enemyH(enemy.enemyX, enemy.enemyY);
+  enemyHealthBar = new enemyH(enemy.enemyX, enemy.enemyY, 100,100);
   
 
   // Button and Cursor Values
@@ -86,7 +86,6 @@ function setup() {
   // Booleans Values
   setBoolean = {
     bulletInteract: false,
-    bulletIsCollide: false,
   };
 }
 
@@ -183,7 +182,7 @@ function gameRun() { // Runs the game
   generateEnemy(); 
   makePlayerHealthBarBar();
   playerHealth();
-  // makeEnemyHealthBarBar();
+  makeEnemyHealthBarBar();
   // removeEnemy();
 }
 
@@ -377,14 +376,14 @@ function enemyRespawnRandom() {
   } 
 }
 
-// Enemy collide with player, delete enemy
-function removeEnemy() {
-  for (let i=0; i<enemy.length; i++) {
-    if (enemy[i].playerInteract === true) {
-      enemy.splice(i,1);
-    }
-  }
-}
+// // Enemy collide with player, delete enemy
+// function removeEnemy() {
+//   for (let i=0; i<enemy.length; i++) {
+//     if (enemy[i].playerInteract === true) {
+//       enemy.splice(i,1);
+//     }
+//   }
+// }
 
 // Check if bullet and enemy collide, if true, delete bullet and enemy that collided
 function checkCollided() {
@@ -392,17 +391,13 @@ function checkCollided() {
     for (let b=0; b<bullets.length; b++) {
       setBoolean.bulletInteract = collideRectRect(enemy[e].enemyX, enemy[e].enemyY, enemy[e].enemySize, enemy[e].enemySize,
         bullets[b].bulletX, bullets[b].bulletY, bullets[b].radius, bullets[b].radius);
-      if (setBoolean.bulletInteract === true && !setBoolean.bulletIsCollide) {
-        setBoolean.bulletIsCollide = true;
+      if (setBoolean.bulletInteract === true) {
         bullets.splice(b, 1);
-        playerHealthBar.health -= 10;
-        if (playerHealthBar.health <= 0) {
+        // enemy[e].healthBar.health -= 50;
+        // if (enemy[e].healthBar <= 0) {
           enemy.splice(e, 1);
-        }
+        // }
       } 
-      if (setBoolean.bulletIsCollide === true && !setBoolean.bulletInteract) {
-        setBoolean.bulletIsCollide = false;
-      }
     }
   }
 }
@@ -417,18 +412,16 @@ function makePlayerHealthBarBar() {
 
 function playerHealth() {
   if (playerHealthBar.health <= 0) {
-    noLoop();
+    states.game = "toStart"
     playerHealthBar.health = 100;
   }
 }
 
-
-
-// function makeEnemyHealthBarBar() {
-//   for (let i = 0; i<enemy.length; i++) {
-//     enemyHealthBar.checkColor();
-//     enemyHealthBar.fillBar();
-//     enemyHealthBar.drawBar();
-//     enemyHealthBar.updatePos(enemy[i].enemyX, enemy[i].enemyY);
-//   } 
-// }
+function makeEnemyHealthBarBar() {
+  for (let i = 0; i<enemy.length; i++) {
+    enemyHealthBar.checkColor();
+    enemyHealthBar.fillBar();
+    enemyHealthBar.drawBar();
+    enemyHealthBar.updatePos(enemy[i].enemyX, enemy[i].enemyY);
+  } 
+}

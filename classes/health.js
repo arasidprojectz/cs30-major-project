@@ -50,19 +50,21 @@ class playerH extends Health {
   }
 }
 
-// class enemyH extends Health {
-//   constructor(x, y) {
-//     super(x, y, 40, 10, 100, 100);
-//   }
+class enemyH extends Health {
+  constructor(x, y, health, maxHealth) {
+    super(x, y, 40, 10, 100, 100);
+    this.health = health;
+    this.maxHealth = maxHealth
+  }
 
-//   updatePos(x, y) {
-//     this.x = x;
-//     this.y = y; 
-//   }
+  updatePos(x, y) {
+    this.x = x;
+    this.y = y; 
+  }
 
-//   fillBar() {
-//     noStroke();
-//     let drawWidth = (this.health*this.rectWidth)/this.maxHealth;
-//     rect(this.x, this.y, drawWidth, this.rectHeight);
-//   }
-// }
+  fillBar() {
+    noStroke();
+    let drawWidth = (this.health*this.rectWidth)/this.maxHealth;
+    rect(this.x, this.y, drawWidth, this.rectHeight);
+  }
+}

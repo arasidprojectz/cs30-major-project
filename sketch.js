@@ -2,15 +2,40 @@
 // Al Rasid Mamun
 // Jan 6, 2020
 
-let images, sounds, strings;
-let gameSetup, setScore, setTime, setBoolean;
-let states, bulletList;
-let player, enemy = [], bullets = [], coins = [];
-let playerHealthBar, enemyHealthBar;
-const WIDTH = 1050; const HEIGHT = 750;
+let gameSetup;
+let setBoolean;
+let setTime; 
+let setLetters;
+let images;
+let sounds;
+let strings;
+let states;
+let bulletList;
+let grid;
+let player;
+let enemy = [];
+let bullets = [];
+let playerHealthBar;
+let enemyHealthBar;
+
+const WIDTH = 1050; 
+const HEIGHT = 750;
 
 function preload() {
-  // Images which are pre-loaded
+  loadAssets();
+}
+
+function setup() {
+  createCanvas(WIDTH, HEIGHT);
+  setObjects();
+  makeClasses();
+}
+
+function draw() {
+  changeStates();
+}
+
+function loadAssets() {
   images = { 
     introBG: loadImage("assets/images/bg/intro_bg.jpg"),
     gameBG: loadImage("assets/images/bg/game_bg.jpg"),
@@ -30,8 +55,7 @@ function preload() {
     stoneImg: loadImage("assets/images/tiles/stone.png"),
     waterImg: loadImage("assets/images/tiles/water.png"),
   }; 
-
-  // Sounds which are pre-loaded
+  
   sounds = { 
     introSound: loadSound("assets/sounds/intro_music.wav"),
     bgSound: loadSound("assets/sounds/background_music.mp3"),
@@ -39,24 +63,22 @@ function preload() {
     shootSound: loadSound("assets/sounds/shoot_bullet.mp3"),
     gameOverSound: loadSound("assets/sounds/game_over.mp3")
   };
-
-  // Strings which are pre-loaded 
+  
   strings = {
     tileLayout: loadStrings("assets/grid/forest.txt"),
   };
 }
 
-function setup() {
-  createCanvas(WIDTH, HEIGHT);
+function makeClasses() {
   // Make a new player at center of screen
   player = new Player(width/2, height/2);
   // Make a new grid
   grid = new Grid();
-  playerHealthBar = new playerH(player.playerX, player.playerY-15, 100, 100);
-  enemyHealthBar = new enemyH(enemy.enemyX, enemy.enemyY, 100,100);
-  
+  playerHealthBar = new playerH(player.x, player.y-15, 100, 100);
+  enemyHealthBar = new enemyH(enemy.x, enemy.y, 100,100);
+}
 
-  // Button and Cursor Values
+function setObjects() {
   gameSetup = {
     cursorX: width/2, 
     cursorY: height/2, 
@@ -69,27 +91,30 @@ function setup() {
     bulletTime: 400,
     respawnEnemy: 0,
     enemyTime: 4000,
-    playerHp: 100
   };
-
-  // State Values
+  
   states = {
     game: "toStart",
     attack: " "
   };
-
-  // Make an array of bullets
+  
   bulletList = new Array();
   bulletList[0] = "fireBall";
   bulletList[1] = "boomerang";
-
-  // Booleans Values
+  
   setBoolean = {
     bulletInteract: false,
   };
+
+  setLetters = {
+    W: 87,
+    A: 65,
+    S: 83,
+    D: 68
+  };
 }
 
-function draw() {
+function changeStates() {
   imageMode(CORNER);
   if (states.game === "toStart") {
     background(images.introBG);
@@ -115,23 +140,21 @@ function draw() {
     displayGameCursor();
   }
 }
- 
-// Mouse Cursor
+
 function mouseMoved() { // if mouse move, cursorX and cursorY to mouseX and mouseY
   noCursor();
   gameSetup.cursorX = mouseX;
   gameSetup.cursorY = mouseY;
 }
 
-function displayGameCursor() { // Display image
+function displayGameCursor() {
   image(images.inGameCursorImg, gameSetup.cursorX, gameSetup.cursorY, gameSetup.cursorSize, gameSetup.cursorSize);
 }
 
-function displayCursor() { // Display image
+function displayCursor() {
   image(images.cursorImg, gameSetup.cursorX, gameSetup.cursorY, gameSetup.cursorSize, gameSetup.cursorSize);
 }
 
-// Title
 function displayTitles() { // Display all titles in game
   let titleX = width/2; 
   let titleY = height/5; 
@@ -141,22 +164,14 @@ function displayTitles() { // Display all titles in game
   let nSideH = 50;
   let gSideW = 180; 
   let gSideH = 50;
-
-
-  // Game Title
+  
   imageMode(CENTER);
-  image(images.gameTitleImg, titleX, titleY, titleW, titleH);
+  image(images.gameTitleImg, titleX, titleY, titleW, titleH); // Game Title
+  image(images.newGameTitle, gameSetup.buttonX, gameSetup.buttonY + 20, nSideW, nSideH); // New Game Title
+  image(images.guideTitle, gameSetup.buttonX, gameSetup.buttonY + 150, gSideW, gSideH); // Guide Title
 
-  // New Game Title
-  imageMode(CENTER);
-  image(images.newGameTitle, gameSetup.buttonX, gameSetup.buttonY + 20, nSideW, nSideH);
-
-  // Guide Title
-  imageMode(CENTER);
-  image(images.guideTitle, gameSetup.buttonX, gameSetup.buttonY + 150, gSideW, gSideH);
 }
 
-// Game States
 function gameGuide() { // Show guide, pressed esc to exit
   textAlign(CENTER, CENTER);
   fill(255);
@@ -183,7 +198,6 @@ function gameRun() { // Runs the game
   makePlayerHealthBarBar();
   playerHealth();
   makeEnemyHealthBarBar();
-  // removeEnemy();
 }
 
 function makeButton() { // Display buttons, if mouse pressed change state
@@ -292,10 +306,10 @@ function displayOptions() { // Display bullet options, if clicked, set bullet to
 // Apply the value of bulletList and make new bullet
 function bulletOptions() {
   if (states.attack === bulletList[0]) {
-    bullets.push(new Fire(player.playerX, player.playerY));  
+    bullets.push(new Fire(player.x, player.y));  
   }
   else {
-    bullets.push(new Boomerang(player.playerX, player.playerY));  
+    bullets.push(new Boomerang(player.x, player.y));  
   }
 }
 
@@ -327,16 +341,13 @@ function mousePressed() {
       sounds.shootSound.playMode("restart");
     }
   }
-  if (!playerHealthBar.health <= 0) {
-    loop();
-  }
 }
 
 // Delete bullet if at edge of screen 
 function removeBullet() {
   for (let i = 0; i<bullets.length; i++) {
-    if (bullets[i].bulletX < 0 || bullets[i].bulletX > width ||
-        bullets[i].bulletY < 0 || bullets[i].bulletY > height) {
+    if (bullets[i].x < 0 || bullets[i].x > width ||
+        bullets[i].y < 0 || bullets[i].y > height) {
       bullets.splice(i, 1);
     }
   }
@@ -362,7 +373,7 @@ function makeGrid(){
 // Make a new enemy every three seconds and push it to array 
 function generateEnemy() {
   if (millis() > gameSetup.respawnEnemy + gameSetup.enemyTime) {
-    enemy.push(new Enemy(random(width - player.playerX), random(height - player.playerY), player.playerX, player.playerY));  
+    enemy.push(new Enemy(random(width - player.x), random(height - player.y)));  
     gameSetup.respawnEnemy = millis();
   }  
 }
@@ -376,43 +387,33 @@ function enemyRespawnRandom() {
   } 
 }
 
-// // Enemy collide with player, delete enemy
-// function removeEnemy() {
-//   for (let i=0; i<enemy.length; i++) {
-//     if (enemy[i].playerInteract === true) {
-//       enemy.splice(i,1);
-//     }
-//   }
-// }
-
 // Check if bullet and enemy collide, if true, delete bullet and enemy that collided
 function checkCollided() {
   for (let e=0; e<enemy.length; e++) { 
     for (let b=0; b<bullets.length; b++) {
-      setBoolean.bulletInteract = collideRectRect(enemy[e].enemyX, enemy[e].enemyY, enemy[e].enemySize, enemy[e].enemySize,
-        bullets[b].bulletX, bullets[b].bulletY, bullets[b].radius, bullets[b].radius);
+      setBoolean.bulletInteract = collideRectRect(enemy[e].x, enemy[e].y, enemy[e].size, enemy[e].size,
+        bullets[b].x, bullets[b].y, bullets[b].radius, bullets[b].radius);
       if (setBoolean.bulletInteract === true) {
         bullets.splice(b, 1);
         // enemy[e].healthBar.health -= 50;
         // if (enemy[e].healthBar <= 0) {
-          enemy.splice(e, 1);
+        enemy.splice(e, 1);
         // }
       } 
     }
   }
 }
 
-// Health Bar 
 function makePlayerHealthBarBar() {
   playerHealthBar.checkColor();
   playerHealthBar.fillBar();
   playerHealthBar.drawBar();
-  playerHealthBar.updatePos(player.playerX, player.playerY);
+  playerHealthBar.updatePos(player.x, player.y);
 }
 
 function playerHealth() {
   if (playerHealthBar.health <= 0) {
-    states.game = "toStart"
+    states.game = "toStart";
     playerHealthBar.health = 100;
   }
 }
@@ -422,6 +423,305 @@ function makeEnemyHealthBarBar() {
     enemyHealthBar.checkColor();
     enemyHealthBar.fillBar();
     enemyHealthBar.drawBar();
-    enemyHealthBar.updatePos(enemy[i].enemyX, enemy[i].enemyY);
+    enemyHealthBar.updatePos(enemy[i].x, enemy[i].y);
   } 
+}
+
+class Player {
+  constructor(x, y) {
+    this.x = x; 
+    this.y = y;
+    this.dX = 2.5;
+    this.dY = 2.5; 
+    this.scaler = 0.08;
+    this.width = images.playerImg.width*this.scaler;
+    this.height = images.playerImg.height * this.scaler;
+    this.aimAngle = 0;
+    this.bulletDistance = 0;
+    this.direction = "";
+    this.isWalkable = false;
+  }
+  
+  displayPlayer() {
+    image(images.playerImg, this.x, this.y, this.width, this.height);
+  }
+  
+  // Calculate Distance from player postion to mouse postion
+  angleOfBullets(mY, mX) {
+    this.aimAngle = atan2(this.y - mY,this.x - mX);
+    this.bulletDistance = -10;
+  }
+  
+  // Move using WASD && can not go off screen
+  // Check if the path is walkable or not
+  movePlayer() { 
+    if (keyIsDown(setLetters.D) && this.x < width - this.width) {
+      this.direction = "right";
+      if (this.isWalkable === true) {
+        this.x += this.dX;
+      }
+    } 
+    else if (keyIsDown(setLetters.A) && this.x > 0) {
+      this.direction = "left";
+      if (this.isWalkable === true) {
+        this.x -= this.dX;
+      }
+    } 
+    else if (keyIsDown(setLetters.W) && this.y > 0) {
+      this.direction = "up";
+      if (this.isWalkable === true) {
+        this.y -= this.dY;
+        this.isWalkable = false; 
+      }
+    } 
+    else if (keyIsDown(setLetters.S) && this.y < height - this.height) {
+      this.direction = "down";
+      if (this.isWalkable === true) { 
+        this.y += this.dY;
+      }
+    }
+  }
+  
+  // Check the tile if the tile is walkable
+  collideWithTile() { 
+    if (this.direction === "up") { // Top tile colision
+      let gridX = floor((this.x + this.width/2)/grid.cellW);
+      let gridY = floor(this.y/grid.cellH); 
+      if (grid.myMap[gridY][gridX] === "." || grid.myMap[gridY][gridX] === "G") {
+        this.isWalkable = true;
+      }
+      else {
+        this.isWalkable = false;
+      }
+    }
+    else if (this.direction === "down") { // Down tile colision
+      let gridX = floor((this.x + this.width/2)/grid.cellW);
+      let gridY = floor((this.y + this.height)/grid.cellH); 
+      if (grid.myMap[gridY][gridX] === "." || grid.myMap[gridY][gridX] === "G") {
+        this.isWalkable = true;
+      }
+      else {
+        this.isWalkable = false;
+      }
+    }
+    else if (this.direction === "left") { // Left tile colision
+      let gridX = floor((this.x )/grid.cellW);
+      let gridY = floor((this.y + this.height/2)/grid.cellH); 
+      if (grid.myMap[gridY][gridX] === "." || grid.myMap[gridY][gridX] === "G") {
+        this.isWalkable = true;
+      }
+      else {
+        this.isWalkable = false;
+      }
+    }
+    else if (this.direction === "right") { // Right tile colision
+      let gridX = floor((this.x+this.width)/grid.cellW);
+      let gridY = floor((this.y + this.height/2)/grid.cellH); 
+      if (grid.myMap[gridY][gridX] === "." || grid.myMap[gridY][gridX] === "G") {
+        this.isWalkable = true;
+      }
+      else {
+        this.isWalkable = false;
+      }
+    }
+  }
+}
+
+class Bullet {
+  constructor(pX, pY) {
+    this.x = pX; 
+    this.y = pY; 
+    this.dX = 0;
+    this.dY = 0;
+    this.angle = 0;
+    this.isMoveable = false;
+  }
+  
+  // Update x and y values with dx and dy
+  update() {
+    this.x += this.dX;
+    this.y += this.dY;
+  }
+  
+  // Use angle given by player, change the values of dx and dy
+  shootBullets() {
+    this.angle = player.aimAngle;
+    this.dX = player.bulletDistance * cos(this.angle)*8;
+    this.dY = player.bulletDistance * sin(this.angle)*8;
+  }
+  
+  collideWithTile() {
+    let gridX = floor(this.x/grid.cellW);
+    let gridY = floor(this.y/grid.cellH); 
+    if (grid.myMap[gridY][gridX] === "." || grid.myMap[gridY][gridX] === "G") {
+      this.isMoveable = true;
+    }
+    else {
+      this.isMoveable = false;
+    }
+  }
+} 
+  
+// Extends of bullet class
+class Fire extends Bullet {
+  constructor(pX, pY) {
+    super(pX, pY);
+    this.radius = 5;
+  }
+  
+  displayBullets() { 
+    image(images.bulletImg, this.x, this.y, this.radius*2, this.radius*2);
+  }
+} 
+  
+// Extends of bullet class
+class Boomerang extends Bullet {
+  constructor(pX, pY) {
+    super(pX, pY);
+    this.radius = 10;
+  }
+  
+  displayBullets() {
+    image(images.boomerangImg, this.x, this.y, this.radius*2, this.radius*2);
+  }
+}
+
+class Enemy {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.size = 25;
+    this.bulletDistance;
+    this.playerInteract = false;
+    this.healthBar = new enemyH(this.x, this.y, 100,100);
+  }
+  
+  displayEnemy() {
+    imageMode(CENTER);
+    image(images.enemyImg, this.x, this.y, this.size, this.size);
+  }
+    
+  // Move the enemy toward the player
+  updatePosition() {
+    let posX = player.x - this.x;
+    let posY = player.y - this.y;
+  
+    if (posX > 25) {
+      this.x += 1;
+    } 
+    else {
+      this.x -= 1;
+    }
+    if (posY > 25) {
+      this.y += 1;
+    } 
+    else {
+      this.y -= 1;
+    }
+  }
+  
+  // Check if player collide with enemy, true, player health decrease one
+  interactWithPlayer() {
+    this.playerInteract = collideRectRect(this.x, this.y, this.size, this.size, player.x, player.y, player.width, player.height);
+    if (this.playerInteract === true) {
+      playerHealthBar.health -= 10;
+    } 
+  }  
+}
+
+class Grid {
+  constructor() {
+    this.myMap = strings.tileLayout;
+    this.cols = this.myMap.length;
+    this.rows = this.myMap[0].length-1;
+    this.cellW = width/this.cols;
+    this.cellH = height/this.rows;
+  }
+  
+  // Make the tiles size according to the cols and rows, and use value of strings 
+  makeTileMap(theCols, theRows) { 
+    for (let x = 0; x < theCols; x++) { 
+      for (let y = 0; y < theRows; y++) {
+        if (this.myMap[y][x] === "G") { // Ground Tile
+          image(images.groundImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
+        }
+        else if (this.myMap[y][x] === "S") { // Stone Tile
+          image(images.stoneImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
+        }
+        else if (this.myMap[y][x] === "W") { // Wayer Tile
+          image(images.waterImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
+        }
+        else if (this.myMap[y][x] === ".") { // Grass Tile
+          image(images.grassImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
+        }
+      }
+    }
+  }
+}
+  
+class Health {
+  constructor(x, y, rectWidth, rectHeight, health, maxHealth) {
+    this.x = x;
+    this.y = y; 
+    this.rectWidth = rectWidth;
+    this.rectHeight = rectHeight;
+    this.health = health; 
+    this.maxHealth = maxHealth;
+  }
+    
+  checkColor() {
+    if (this.health < 40) {
+      fill(255, 0, 0);
+    }  
+    else if (this.health < 80) {
+      fill(255, 200, 0);
+    } 
+    else{
+      fill(0, 255, 0);
+    }
+  }
+    
+  // Draw outline of the Bar
+  drawBar() {
+    stroke(0);
+    strokeWeight(2);
+    noFill();
+    rect(this.x, this.y, this.rectWidth, this.rectHeight);
+  }
+}
+  
+class playerH extends Health {
+  constructor(x, y, health, maxHealth) {
+    super(x, y, 40, 10);
+    this.health = health;
+  }
+  
+  updatePos(x, y) {
+    this.x = x;
+    this.y = y; 
+  }
+  
+  fillBar() {
+    noStroke();
+    let drawWidth = (this.health*this.rectWidth)/this.maxHealth;
+    rect(this.x, this.y, drawWidth, this.rectHeight);
+  }
+}
+  
+class enemyH extends Health {
+  constructor(x, y, health, maxHealth) {
+    super(x, y, 40, 10, 100, 100);
+    this.health = health;
+  }
+  
+  updatePos(x, y) {
+    this.x = x;
+    this.y = y; 
+  }
+  
+  fillBar() {
+    noStroke();
+    let drawWidth = (this.health*this.rectWidth)/this.maxHealth;
+    rect(this.x, this.y, drawWidth, this.rectHeight);
+  }
 }

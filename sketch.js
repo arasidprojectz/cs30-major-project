@@ -7,6 +7,7 @@ let setBoolean;
 let setTime; 
 let setLetters;
 let images;
+let playerImgList;
 let sounds;
 let strings;
 let states;
@@ -22,6 +23,7 @@ const WIDTH = 1050;
 const HEIGHT = 750;
 
 function preload() {
+  loadSprite();
   loadAssets();
 }
 
@@ -46,7 +48,6 @@ function loadAssets() {
     guideTitle: loadImage("assets/images/text/guide_title.png"),
     buttonH: loadImage("assets/images/button/button_h.png"),
     buttonNH: loadImage("assets/images/button/button_nh.png"),
-    playerImg: loadImage("assets/images/players/gunfighter.png"),
     bulletImg: loadImage("assets/images/items/fire_ball.png"),
     enemyImg: loadImage("assets/images/enemy/enemy.png"),
     boomerangImg: loadImage("assets/images/items/boomerang.png"),
@@ -92,9 +93,9 @@ function setObjects() {
   
   states = {
     game: "toStart",
+    spriteState: "playerUp",
     attack: " ",
     direction: ""
-
   };
   
   bulletList = new Array();
@@ -118,6 +119,22 @@ function setObjects() {
     S: 83,
     D: 68
   };
+
+  playerImgList = {
+    upImg: [],
+    downImg: [],
+    leftImg: [],
+    rightImg: []
+  };
+}
+
+function loadSprite() {
+  for (let i=0; i<9; i++) {
+    playerImgList.upImg[i] = loadImage("assets/images/players/down/front_"+i+".png");
+    playerImgList.downImg[i] = loadImage("assets/images/players/up/back_"+i+".png");
+    playerImgList.leftImg[i] = loadImage("assets/images/players/left/left_"+i+".png");
+    playerImgList.rightImg[i] = loadImage("assets/images/players/right/right_"+i+".png");
+  }
 }
 
 function changeStates() {
@@ -144,6 +161,21 @@ function changeStates() {
   if (states.game === "runGame") {
     gameRun();
     displayGameCursor();
+  }
+}
+
+function checkSpriteState() {
+  if (states.spriteState === "playerUp") {
+    image(playerImgList.upImg[player.index], player.x, player.y, player.width, player.height);
+  }
+  else if (states.spriteState === "playerDown") {
+    image(playerImgList.DownImg[player.index], player.x, player.y, player.width, player.height);
+  }
+  else if (states.spriteState === "playerLeft") {
+    image(playerImgList.leftImgImg[player.index], player.x, player.y, player.width, player.height);
+  }
+  else if (states.spriteState === "playerRight") {
+    image(playerImgList.rightImg[player.index], player.x, player.y, player.width, player.height);
   }
 }
 
@@ -321,7 +353,6 @@ function bulletOptions() {
 
 // Get values from player class and use them in player
 function makePlayer() {
-  player.displayPlayer();
   player.movePlayer();
   player.angleOfBullets(mouseY, mouseX);
   player.collideWithTile();
@@ -376,14 +407,6 @@ function makeGrid(){
   grid.makeTileMap(grid.cols, grid.rows);
 }
 
-// Make a new enemy every three seconds and push it to array 
-// function generateEnemy() {
-//   if (millis() > setTime.respawnEnemy + setTime.enemyTime) {
-//     enemy.push(new Enemy(random(width), random(height), 100));  
-//     setTime.respawnEnemy = millis();
-//   }  
-// }
-
 // Get Values from enemy class and use them in enemy array
 function makeEnemy() {
   enemy.displayEnemy();
@@ -437,17 +460,14 @@ class Player {
     this.dX = 2.5;
     this.dY = 2.5; 
     this.scaler = 0.08;
-    this.width = images.playerImg.width*this.scaler;
-    this.height = images.playerImg.height * this.scaler;
+    this.width = 20
+    this.height = 50
     this.aimAngle = 0;
     this.bulletDistance = 0;
+    this.index = 0;
     this.health = health; 
     this.maxHealth = maxHealth;
     this.isWalkable = false;
-  }
-  
-  displayPlayer() {
-    image(images.playerImg, this.x, this.y, this.width, this.height);
   }
   
   // Calculate Distance from player postion to mouse postion
@@ -461,18 +481,24 @@ class Player {
   movePlayer() { 
     if (keyIsDown(setLetters.D) && this.x < width - this.width) {
       states.direction = "right";
+      // states.spriteState = "playerRight";
+      // this.index = (this.index + 1) % playerImgList.rightImg;
       if (this.isWalkable === true) {
         this.x += this.dX;
       }
     } 
     else if (keyIsDown(setLetters.A) && this.x > 0) {
       states.direction = "left";
+      // states.spriteState = "playerLeft";
+      // this.index = (this.index + 1) % playerImgList.leftImg;
       if (this.isWalkable === true) {
         this.x -= this.dX;
       }
     } 
     else if (keyIsDown(setLetters.W) && this.y > 0) {
       states.direction = "up";
+      // states.spriteState = "playerUp";
+      // this.index = (this.index + 1) % playerImgList.upImg;
       if (this.isWalkable === true) {
         this.y -= this.dY;
         this.isWalkable = false; 
@@ -480,6 +506,8 @@ class Player {
     } 
     else if (keyIsDown(setLetters.S) && this.y < height - this.height) {
       states.direction = "down";
+      // states.spriteState = "playerDown";
+      // this.index = (this.index + 1) % playerImgList.downImg;
       if (this.isWalkable === true) { 
         this.y += this.dY;
       }
@@ -624,7 +652,7 @@ class Enemy {
   interactWithPlayer() {
     this.playerInteract = collideRectRect(this.x, this.y, this.size, this.size, player.x, player.y, player.width, player.height);
     if (this.playerInteract === true) {
-      // player.health -= 10;
+      player.health -= 10;
     } 
   }  
 }

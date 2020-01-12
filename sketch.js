@@ -16,6 +16,10 @@ let grid;
 let player;
 let enemy;
 let bullets = [];
+let pMoveUp = [];
+let pMoveDown = [];
+let pMoveLeft = [];
+let pMoveRight = [];
 let playerHealthBar;
 let enemyHealthBar;
 
@@ -23,8 +27,8 @@ const WIDTH = 1050;
 const HEIGHT = 750;
 
 function preload() {
-  loadSprite();
   loadAssets();
+  loadSprite();
 }
 
 function setup() {
@@ -70,10 +74,18 @@ function loadAssets() {
   };
 }
 
+function loadSprite() {
+  for (let i=0; i<9; i++) { //Idle
+    pMoveUp[i] = loadImage("assets/images/players/up_"+i+".png");
+    pMoveDown[i] = loadImage("assets/images/players/down_"+i+".png");
+    pMoveLeft[i] = loadImage("assets/images/players/left_"+i+".png");
+    pMoveRight[i] = loadImage("assets/images/players/right_"+i+".png");
+  }
+}
+
 function makeClasses() {
   player = new Player(width/2, height/2, 100, 100);
   enemy = new Enemy(random(width), random(height), 100);
-  // enemy = new Enemy(random(width), random(height), 100, 100);
   grid = new Grid();
   playerHealthBar = new playerH(player.x, player.y-15);
   enemyHealthBar = new enemyH(enemy.x, enemy.y);
@@ -93,7 +105,7 @@ function setObjects() {
   
   states = {
     game: "toStart",
-    spriteState: "playerUp",
+    spriteState: "pDown",
     attack: " ",
     direction: ""
   };
@@ -119,22 +131,6 @@ function setObjects() {
     S: 83,
     D: 68
   };
-
-  playerImgList = {
-    upImg: [],
-    downImg: [],
-    leftImg: [],
-    rightImg: []
-  };
-}
-
-function loadSprite() {
-  for (let i=0; i<9; i++) {
-    playerImgList.upImg[i] = loadImage("assets/images/players/down/front_"+i+".png");
-    playerImgList.downImg[i] = loadImage("assets/images/players/up/back_"+i+".png");
-    playerImgList.leftImg[i] = loadImage("assets/images/players/left/left_"+i+".png");
-    playerImgList.rightImg[i] = loadImage("assets/images/players/right/right_"+i+".png");
-  }
 }
 
 function changeStates() {
@@ -165,17 +161,17 @@ function changeStates() {
 }
 
 function checkSpriteState() {
-  if (states.spriteState === "playerUp") {
-    image(playerImgList.upImg[player.index], player.x, player.y, player.width, player.height);
+  if (states.spriteState === "pUp") {
+    image(pMoveUp[player.index], player.x, player.y, player.width, player.height);
   }
-  else if (states.spriteState === "playerDown") {
-    image(playerImgList.DownImg[player.index], player.x, player.y, player.width, player.height);
+  if (states.spriteState === "pDown") {
+    image(pMoveDown[player.index], player.x, player.y, player.width, player.height);
   }
-  else if (states.spriteState === "playerLeft") {
-    image(playerImgList.leftImgImg[player.index], player.x, player.y, player.width, player.height);
+  if (states.spriteState === "pLeft") {
+    image(pMoveLeft[player.index], player.x, player.y, player.width, player.height);
   }
-  else if (states.spriteState === "playerRight") {
-    image(playerImgList.rightImg[player.index], player.x, player.y, player.width, player.height);
+  if (states.spriteState === "pRight") {
+    image(pMoveRight[player.index], player.x, player.y, player.width, player.height);
   }
 }
 
@@ -231,11 +227,11 @@ function gameRun() { // Runs the game
   checkCollided();
   bulletCollideWithTile();
   removeBullet();
-  // enemyRespawnRandom();
   makeEnemy(); 
   makePlayerHealthBarBar();
   playerHealth();
   makeEnemyHealthBarBar();
+  checkSpriteState();
 }
 
 function makeButton() { // Display buttons, if mouse pressed change state
@@ -354,6 +350,7 @@ function bulletOptions() {
 // Get values from player class and use them in player
 function makePlayer() {
   player.movePlayer();
+  // player.changeState();
   player.angleOfBullets(mouseY, mouseX);
   player.collideWithTile();
 }
@@ -423,7 +420,6 @@ function checkCollided() {
     if (setBoolean.bulletInteract === true) {
       bullets.splice(b, 1);
       enemy.health -= 50;
-      console.log(enemy.health);
       if (enemy.health <= 0) {
         enemy = new Enemy(random(width), random(height), 100);
       }
@@ -459,9 +455,8 @@ class Player {
     this.y = y;
     this.dX = 2.5;
     this.dY = 2.5; 
-    this.scaler = 0.08;
-    this.width = 20
-    this.height = 50
+    this.width = 35;
+    this.height = 60;
     this.aimAngle = 0;
     this.bulletDistance = 0;
     this.index = 0;
@@ -475,39 +470,39 @@ class Player {
     this.aimAngle = atan2(this.y - mY,this.x - mX);
     this.bulletDistance = -10;
   }
-  
+
   // Move using WASD && can not go off screen
   // Check if the path is walkable or not
   movePlayer() { 
-    if (keyIsDown(setLetters.D) && this.x < width - this.width) {
+    if (keyIsDown(setLetters.D) && this.x < width - this.width && frameCount % 8 === 0) {
       states.direction = "right";
-      // states.spriteState = "playerRight";
-      // this.index = (this.index + 1) % playerImgList.rightImg;
+      states.spriteState = "pRight";
+      this.index = (this.index + 1) % pMoveRight.length;
       if (this.isWalkable === true) {
         this.x += this.dX;
       }
     } 
-    else if (keyIsDown(setLetters.A) && this.x > 0) {
+    else if (keyIsDown(setLetters.A) && this.x > 0 && frameCount % 8 === 0) {
       states.direction = "left";
-      // states.spriteState = "playerLeft";
-      // this.index = (this.index + 1) % playerImgList.leftImg;
+      states.spriteState = "pLeft";
+      this.index = (this.index + 1) % pMoveLeft.length;
       if (this.isWalkable === true) {
         this.x -= this.dX;
       }
     } 
-    else if (keyIsDown(setLetters.W) && this.y > 0) {
+    else if (keyIsDown(setLetters.W) && this.y > 0 &&  frameCount % 8 === 0) {
       states.direction = "up";
-      // states.spriteState = "playerUp";
-      // this.index = (this.index + 1) % playerImgList.upImg;
+      states.spriteState = "pUp";
+      this.index = (this.index + 1) % pMoveUp.length;
       if (this.isWalkable === true) {
         this.y -= this.dY;
         this.isWalkable = false; 
       }
     } 
-    else if (keyIsDown(setLetters.S) && this.y < height - this.height) {
+    else if (keyIsDown(setLetters.S) && this.y < height - this.height && frameCount % 8 === 0) {
       states.direction = "down";
-      // states.spriteState = "playerDown";
-      // this.index = (this.index + 1) % playerImgList.downImg;
+      states.spriteState = "pDown";
+      this.index = (this.index + 1) % pMoveDown.length;
       if (this.isWalkable === true) { 
         this.y += this.dY;
       }

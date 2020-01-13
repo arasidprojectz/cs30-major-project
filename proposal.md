@@ -1,36 +1,36 @@
 # Major Project Proposal
 ## Description
-I am going to be creating a game that will be a 2D adventure game. There will be a player who explores to find his way out of the mysterious world, throughout the game, the player finds multiple weapons that helps to fight with various creatures.
+I am going to be creating a game that will be 2D RPG (Top Down) game. There will be a player who explores the mysterious world and finds multiple weapons that helps to fight with various creatures.
 
 ## Need to Have List
 - Game intro
     - Loading screen
-- Various Weapons
-    - Level system
-- User input
-    - Name
-- Enemy Basic AI
-    - Move
-    - Collision Detection
-    - Defensive move 
+    - User Name
+- Enemy
+    - Collision Detection with tiles
     - Attack Player 
-- Sprite Animation
-- In-game player stats
+- Player Stats
+    - Survival time
+    - Coin collected
+    - Count Kills 
+- Sprite Animation 
+- Guide for user
 - Health system for player/enemy
-- Add more sound effects
+- Add more sounds effect/images
 
 ## Nice to Have List
 - Inventory system 
-    - store/drop weapon, medkit, etc
+    - store/drop medkit, chest box
 - Shop Class 
-    - Weapons
     - Powers-up
+    - Weapons
+        - Various Weapons
+        - Level system
 - Game Mode 
     - Single/Multiplayer
     - Day/Night
         - The enemy would be twice stronger
-- Scrolling tilemap
-    - In-game display portion of map
+- Tilemap 
+    - Generate multiple maps
+    - Scrolling map 
 - Minimap
-- Save game progress
-- Make Website look better

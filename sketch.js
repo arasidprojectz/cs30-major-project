@@ -15,6 +15,7 @@ let bulletList;
 let grid;
 let player;
 let enemy;
+let coin = [];
 let bullets = [];
 let pMoveUp = [];
 let pMoveDown = [];
@@ -45,16 +46,23 @@ function loadAssets() {
   images = { 
     introBG: loadImage("assets/images/bg/intro_bg.jpg"),
     gameBG: loadImage("assets/images/bg/game_bg.jpg"),
+
     cursorImg: loadImage("assets/images/items/cursor.png"),
     inGameCursorImg: loadImage("assets/images/items/target.png"),
+
     gameTitleImg: loadImage("assets/images/text/game_title.png"),
     newGameTitle: loadImage("assets/images/text/new_game.png"),
     guideTitle: loadImage("assets/images/text/guide_title.png"),
+
     buttonH: loadImage("assets/images/button/button_h.png"),
     buttonNH: loadImage("assets/images/button/button_nh.png"),
-    bulletImg: loadImage("assets/images/items/fire_ball.png"),
+
     enemyImg: loadImage("assets/images/enemy/enemy.png"),
+
+    bulletImg: loadImage("assets/images/items/fire_ball.png"),
     boomerangImg: loadImage("assets/images/items/boomerang.png"),
+    coinImg: loadImage("assets/images/items/coin.png"),
+    
     grassImg: loadImage("assets/images/tiles/grass.png"),
     groundImg: loadImage("assets/images/tiles/ground.jpg"),
     stoneImg: loadImage("assets/images/tiles/stone.png"),
@@ -84,12 +92,11 @@ function loadSprite() {
 }
 
 function makeClasses() {
-  player = new Player(width/2, height/2, 100, 100);
+  player = new Player(width/2, height/2, 100);
   enemy = new Enemy(random(width), random(height), 100);
   grid = new Grid();
-  playerHealthBar = new playerH(player.x, player.y-15);
+  playerHealthBar = new playerH(player.x, player.y);
   enemyHealthBar = new enemyH(enemy.x, enemy.y);
-
 }
 
 function setObjects() {
@@ -107,7 +114,7 @@ function setObjects() {
     game: "toStart",
     spriteState: "pDown",
     attack: " ",
-    direction: ""
+    direction: " "
   };
   
   bulletList = new Array();
@@ -228,10 +235,12 @@ function gameRun() { // Runs the game
   bulletCollideWithTile();
   removeBullet();
   makeEnemy(); 
-  makePlayerHealthBarBar();
+  makePlayerHealthBar();
   playerHealth();
-  makeEnemyHealthBarBar();
+  makeEnemyHealthBar();
   checkSpriteState();
+  makeCoins();
+  removeCoins(); 
 }
 
 function makeButton() { // Display buttons, if mouse pressed change state
@@ -421,17 +430,18 @@ function checkCollided() {
       bullets.splice(b, 1);
       enemy.health -= 50;
       if (enemy.health <= 0) {
+        coin.push(new Coins(enemy.x, enemy.y));
         enemy = new Enemy(random(width), random(height), 100);
       }
     } 
   }
 }
 
-function makePlayerHealthBarBar() {
+function makePlayerHealthBar() {
   playerHealthBar.changeColor();
   playerHealthBar.fillBar();
   playerHealthBar.drawBar();
-  playerHealthBar.updatePos(player.x, player.y);
+  playerHealthBar.updatePos(player.x-18, player.y-38);
 }
 
 function playerHealth() {
@@ -441,27 +451,43 @@ function playerHealth() {
   }
 }
 
-function makeEnemyHealthBarBar() {
+function makeEnemyHealthBar() {
   enemyHealthBar.changeColor();
   enemyHealthBar.fillBar();
   enemyHealthBar.drawBar();
-  enemyHealthBar.updatePos(enemy.x, enemy.y);
+  enemyHealthBar.updatePos(enemy.x-18, enemy.y-25);
+}
+
+function makeCoins() {
+  for (let i=0; i<coin.length; i++) {
+    coin[i].displayImg();
+    coin[i].collisionWithPlayer();
+  }
+}
+
+function removeCoins() {
+  for (let i=0; i<coin.length; i++) { 
+    if (coin[i].isCollide === true) {
+      coin.splice(i, 1);
+    }
+  }
 }
 
 
+
 class Player {
-  constructor(x, y, health, maxHealth) {
+  constructor(x, y, health) {
     this.x = x; 
     this.y = y;
-    this.dX = 2.5;
-    this.dY = 2.5; 
-    this.width = 35;
-    this.height = 60;
+    this.dX = 3;
+    this.dY = 3; 
+    this.width = 30;
+    this.height = 50;
     this.aimAngle = 0;
     this.bulletDistance = 0;
     this.index = 0;
     this.health = health; 
-    this.maxHealth = maxHealth;
+    this.maxHealth = health;
     this.isWalkable = false;
   }
   
@@ -723,7 +749,7 @@ class playerH extends Health {
   
   fillBar() {
     noStroke();
-    let drawWidth = (player.health*this.width)/player.maxHealth;
+    let drawWidth = player.health*this.width / player.maxHealth;
     rect(this.x, this.y, drawWidth, this.height);
   }
 }
@@ -752,7 +778,31 @@ class enemyH extends Health {
   
   fillBar() {
     noStroke();
-    let drawWidth = (enemy.health*this.width)/enemy.maxHealth;
+    let drawWidth = enemy.health*this.width / enemy.maxHealth;
     rect(this.x, this.y, drawWidth, this.height);
   }
 }
+
+class Coins {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 50;
+    this.score = 0;
+    this.interact = false;
+  }
+  displayImg() {
+    image(images.coinImg, this.x, this.y, this.radius, this.radius);
+  }
+
+  // Check if player collide with coins, true, add one to coin score
+  collisionWithPlayer() {
+    this.interact = collideRectRect(this.x, this.y, this.radius, this.radius, player.x, player.y, player.width, player.height);
+    if (this.interact === true) {
+      this.score += 1;
+      // sounds.coinSound.setVolume(0.5);
+      // sounds.coinSound.play();
+    } 
+  } 
+}    
+

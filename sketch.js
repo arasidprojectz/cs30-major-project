@@ -4,10 +4,10 @@
 
 let gameSetup;
 let setBoolean;
-let setTime; 
-let setLetters;
+let objectTime; 
+let countScore;
+let keyLetter;
 let images;
-let playerImgList;
 let sounds;
 let strings;
 let states;
@@ -21,8 +21,8 @@ let pMoveUp = [];
 let pMoveDown = [];
 let pMoveLeft = [];
 let pMoveRight = [];
-let playerHealthBar;
-let enemyHealthBar;
+// let playerHealthBar;
+// let enemyHealthBar;
 
 const WIDTH = 1050; 
 const HEIGHT = 750;
@@ -35,11 +35,11 @@ function preload() {
 function setup() {
   createCanvas(WIDTH, HEIGHT);
   setObjects();
-  makeClasses();
+  newClasses();
 }
 
 function draw() {
-  changeStates();
+  gameMode();
 }
 
 function loadAssets() {
@@ -53,15 +53,15 @@ function loadAssets() {
     gameTitleImg: loadImage("assets/images/text/game_title.png"),
     newGameTitle: loadImage("assets/images/text/new_game.png"),
     guideTitle: loadImage("assets/images/text/guide_title.png"),
-
     buttonH: loadImage("assets/images/button/button_h.png"),
     buttonNH: loadImage("assets/images/button/button_nh.png"),
 
     enemyImg: loadImage("assets/images/enemy/enemy.png"),
-
     bulletImg: loadImage("assets/images/items/fire_ball.png"),
     boomerangImg: loadImage("assets/images/items/boomerang.png"),
     coinImg: loadImage("assets/images/items/coin.png"),
+    coinBag: loadImage("assets/images/items/coins_bag.png"), 
+    // deadCounter: loadImage("assets/images/items/dead_counter.png"),
     
     grassImg: loadImage("assets/images/tiles/grass.png"),
     groundImg: loadImage("assets/images/tiles/ground.jpg"),
@@ -91,12 +91,12 @@ function loadSprite() {
   }
 }
 
-function makeClasses() {
+function newClasses() {
   player = new Player(width/2, height/2, 100);
   enemy = new Enemy(random(width), random(height), 100);
   grid = new Grid();
-  playerHealthBar = new playerH(player.x, player.y);
-  enemyHealthBar = new enemyH(enemy.x, enemy.y);
+  // playerHealthBar = new playerH(player.x, player.y);
+  // enemyHealthBar = new enemyH(enemy.x, enemy.y);
 }
 
 function setObjects() {
@@ -125,26 +125,30 @@ function setObjects() {
     bulletInteract: false,
   };
 
-  setTime = {
+  objectTime = {
     respawnBullet: 0,
     bulletTime: 400,
     respawnEnemy: 0,
     enemyTime: 2000,
   };
 
-  setLetters = {
+  keyLetter = {
     W: 87,
     A: 65,
     S: 83,
     D: 68
   };
+
+  countScore = {
+
+  };
 }
 
-function changeStates() {
+function gameMode() {
   imageMode(CORNER);
   if (states.game === "toStart") {
     background(images.introBG);
-    makeButton();
+    displayButtonOptions();
     displayTitles();
     displayCursor();
   }
@@ -156,29 +160,26 @@ function changeStates() {
   
   if (states.game === "bulletList") {
     background(images.gameBG);
-    makeBulletList();
+    toStartGame();
     displayOptions();
     displayCursor();
   }
   
   if (states.game === "runGame") {
-    gameRun();
+    generateGrid();
+    createPlayer();
+    playerStates();
+    createNewBullets();
+    makeEnemies(); 
+    // makePlayerHealthBar();
+    // playerHealth();
+    makeCoins();
+    removeCoins(); 
+    bulletCollideWithEnemy();
+    bulletCollideWithTile();
+    removeBullet();
+    drawCounter();
     displayGameCursor();
-  }
-}
-
-function checkSpriteState() {
-  if (states.spriteState === "pUp") {
-    image(pMoveUp[player.index], player.x, player.y, player.width, player.height);
-  }
-  if (states.spriteState === "pDown") {
-    image(pMoveDown[player.index], player.x, player.y, player.width, player.height);
-  }
-  if (states.spriteState === "pLeft") {
-    image(pMoveLeft[player.index], player.x, player.y, player.width, player.height);
-  }
-  if (states.spriteState === "pRight") {
-    image(pMoveRight[player.index], player.x, player.y, player.width, player.height);
   }
 }
 
@@ -205,7 +206,7 @@ function displayTitles() { // Display all titles in game
   let nSideH = 50;
   let gSideW = 180; 
   let gSideH = 50;
-  
+
   imageMode(CENTER);
   image(images.gameTitleImg, titleX, titleY, titleW, titleH); // Game Title
   image(images.newGameTitle, gameSetup.buttonX, gameSetup.buttonY + 20, nSideW, nSideH); // New Game Title
@@ -227,23 +228,8 @@ function gameGuide() { // Show guide, pressed esc to exit
   }
 }
 
-function gameRun() { // Runs the game
-  makeGrid();
-  makePlayer();
-  makeBullets();
-  checkCollided();
-  bulletCollideWithTile();
-  removeBullet();
-  makeEnemy(); 
-  makePlayerHealthBar();
-  playerHealth();
-  makeEnemyHealthBar();
-  checkSpriteState();
-  makeCoins();
-  removeCoins(); 
-}
 
-function makeButton() { // Display buttons, if mouse pressed change state
+function displayButtonOptions() { // Display buttons, if mouse pressed change state
   imageMode(CENTER);
   if (mouseX > width/2 - 180 && mouseX < width/2 + 210 &&
     mouseY > height/2 && mouseY < height/2 + 80) {
@@ -268,7 +254,7 @@ function makeButton() { // Display buttons, if mouse pressed change state
   }
 }
 
-function makeBulletList() { // Draw text, if mouse pressed, game start
+function toStartGame() { // Draw text, if key pressed, game start
   textAlign(CENTER);
   fill(255);
   textSize(30);
@@ -347,7 +333,7 @@ function displayOptions() { // Display bullet options, if clicked, set bullet to
 }
 
 // Apply the value of bulletList and make new bullet
-function bulletOptions() {
+function selectNewBullets() {
   if (states.attack === bulletList[0]) {
     bullets.push(new Fire(player.x, player.y));  
   }
@@ -357,15 +343,38 @@ function bulletOptions() {
 }
 
 // Get values from player class and use them in player
-function makePlayer() {
+function createPlayer() {
   player.movePlayer();
-  // player.changeState();
   player.angleOfBullets(mouseY, mouseX);
   player.collideWithTile();
+  player.drawHealthBar();
+  player.fillBar();
+}
+
+function playerHealth() {
+  if (player.health <= 0) {
+    states.game = "toStart";
+    player.health = 100;
+  }
+}
+
+function playerStates() {
+  if (states.spriteState === "pUp") {
+    image(pMoveUp[player.index], player.x, player.y, player.width, player.height);
+  }
+  if (states.spriteState === "pDown") {
+    image(pMoveDown[player.index], player.x, player.y, player.width, player.height);
+  }
+  if (states.spriteState === "pLeft") {
+    image(pMoveLeft[player.index], player.x, player.y, player.width, player.height);
+  }
+  if (states.spriteState === "pRight") {
+    image(pMoveRight[player.index], player.x, player.y, player.width, player.height);
+  }
 }
 
 // Get values from bullet class and use them in bullets array
-function makeBullets() {
+function createNewBullets() {
   for (let i=0; i<bullets.length; i++) {
     bullets[i].displayBullets();
     bullets[i].shootBullets();
@@ -376,9 +385,9 @@ function makeBullets() {
 // Make a new bullet, if mouse pressed and push it to array 
 function mousePressed() {
   if (states.game === "runGame") {
-    if (millis() > setTime.respawnBullet + setTime.bulletTime) {
-      bulletOptions();
-      setTime.respawnBullet = millis();
+    if (millis() > objectTime.respawnBullet + objectTime.bulletTime) {
+      selectNewBullets();
+      objectTime.respawnBullet = millis();
       sounds.shootSound.setVolume(0.5);
       sounds.shootSound.play();
       sounds.shootSound.playMode("restart");
@@ -409,20 +418,22 @@ function bulletCollideWithTile() {
 }
 
 // Get values from grid class and use them
-function makeGrid(){ 
+function generateGrid(){ 
   grid.makeTileMap(grid.cols, grid.rows);
 }
 
-// Get Values from enemy class and use them in enemy array
-function makeEnemy() {
+// Get Values from enemy class and use them
+function makeEnemies() {
   enemy.displayEnemy();
   enemy.updatePosition();
   enemy.bounceEnemy();
   enemy.interactWithPlayer();
+  enemy.drawHealthBar();
+  enemy.fillBar();
 }
 
 // Check if bullet and enemy collide, if true, delete bullet and enemy that collided
-function checkCollided() {
+function bulletCollideWithEnemy() {
   for (let b=0; b<bullets.length; b++) {
     setBoolean.bulletInteract = collideRectRect(enemy.x, enemy.y, enemy.size, enemy.size,
       bullets[b].x, bullets[b].y, bullets[b].radius, bullets[b].radius);
@@ -437,27 +448,6 @@ function checkCollided() {
   }
 }
 
-function makePlayerHealthBar() {
-  playerHealthBar.changeColor();
-  playerHealthBar.fillBar();
-  playerHealthBar.drawBar();
-  playerHealthBar.updatePos(player.x-18, player.y-38);
-}
-
-function playerHealth() {
-  if (player.health <= 0) {
-    states.game = "toStart";
-    player.health = 100;
-  }
-}
-
-function makeEnemyHealthBar() {
-  enemyHealthBar.changeColor();
-  enemyHealthBar.fillBar();
-  enemyHealthBar.drawBar();
-  enemyHealthBar.updatePos(enemy.x-18, enemy.y-25);
-}
-
 function makeCoins() {
   for (let i=0; i<coin.length; i++) {
     coin[i].displayImg();
@@ -467,22 +457,22 @@ function makeCoins() {
 
 function removeCoins() {
   for (let i=0; i<coin.length; i++) { 
-    if (coin[i].isCollide === true) {
+    if (coin[i].interact === true) {
       coin.splice(i, 1);
     }
   }
 }
 
-
-
 class Player {
   constructor(x, y, health) {
     this.x = x; 
     this.y = y;
-    this.dX = 3;
-    this.dY = 3; 
+    this.dX = 10;
+    this.dY = 10; 
     this.width = 30;
     this.height = 50;
+    this.barWidth = 50; 
+    this.barHeight = 10;
     this.aimAngle = 0;
     this.bulletDistance = 0;
     this.index = 0;
@@ -500,7 +490,7 @@ class Player {
   // Move using WASD && can not go off screen
   // Check if the path is walkable or not
   movePlayer() { 
-    if (keyIsDown(setLetters.D) && this.x < width - this.width && frameCount % 8 === 0) {
+    if (keyIsDown(keyLetter.D) && this.x < width - this.width && frameCount % 10 === 0) {
       states.direction = "right";
       states.spriteState = "pRight";
       this.index = (this.index + 1) % pMoveRight.length;
@@ -508,7 +498,7 @@ class Player {
         this.x += this.dX;
       }
     } 
-    else if (keyIsDown(setLetters.A) && this.x > 0 && frameCount % 8 === 0) {
+    else if (keyIsDown(keyLetter.A) && this.x > 0 && frameCount % 10 === 0) {
       states.direction = "left";
       states.spriteState = "pLeft";
       this.index = (this.index + 1) % pMoveLeft.length;
@@ -516,7 +506,7 @@ class Player {
         this.x -= this.dX;
       }
     } 
-    else if (keyIsDown(setLetters.W) && this.y > 0 &&  frameCount % 8 === 0) {
+    else if (keyIsDown(keyLetter.W) && this.y > 0 &&  frameCount % 10 === 0) {
       states.direction = "up";
       states.spriteState = "pUp";
       this.index = (this.index + 1) % pMoveUp.length;
@@ -525,7 +515,7 @@ class Player {
         this.isWalkable = false; 
       }
     } 
-    else if (keyIsDown(setLetters.S) && this.y < height - this.height && frameCount % 8 === 0) {
+    else if (keyIsDown(keyLetter.S) && this.y < height - this.height && frameCount % 10 === 0) {
       states.direction = "down";
       states.spriteState = "pDown";
       this.index = (this.index + 1) % pMoveDown.length;
@@ -534,7 +524,7 @@ class Player {
       }
     }
   }
-  
+
   // Check the tile if the tile is walkable
   collideWithTile() { 
     if (states.direction === "up") { // Top tile colision
@@ -578,6 +568,21 @@ class Player {
       }
     }
   }
+
+  // Draw outline of the Bar
+  drawHealthBar() {
+    stroke(2);
+    strokeWeight(2);
+    noFill();
+    rect(this.x-8, this.y-14, this.barWidth, this.barHeight);
+  }
+
+  fillBar() {
+    noStroke();
+    fill(0,42,225);
+    let drawWidth = this.health*this.barWidth / this.maxHealth;
+    rect(this.x-8, this.y-14, drawWidth, this.barHeight);
+  }
 }
 
 class Bullet {
@@ -619,7 +624,7 @@ class Bullet {
 class Fire extends Bullet {
   constructor(pX, pY) {
     super(pX, pY);
-    this.radius = 5;
+    this.radius = 8;
   }
   
   displayBullets() { 
@@ -631,7 +636,7 @@ class Fire extends Bullet {
 class Boomerang extends Bullet {
   constructor(pX, pY) {
     super(pX, pY);
-    this.radius = 10;
+    this.radius = 12;
   }
   
   displayBullets() {
@@ -646,6 +651,8 @@ class Enemy {
     this.dX = random(0, 1); 
     this.dY = random(0, 1);
     this.size = 25;
+    this.barWidth = 50; 
+    this.barHeight = 8;
     this.health = health;
     this.maxHealth = health;
     this.playerInteract = false;
@@ -676,6 +683,21 @@ class Enemy {
       player.health -= 10;
     } 
   }  
+
+  // Draw outline of the Bar
+  drawHealthBar() {
+    stroke(2);
+    strokeWeight(2);
+    noFill();
+    rect(this.x-22, this.y-20, this.barWidth, this.barHeight);
+  }
+  
+  fillBar() {
+    noStroke();
+    fill(225,25,25);
+    let drawWidth = this.health*this.barWidth / this.maxHealth;
+    rect(this.x-22, this.y-20, drawWidth, this.barHeight);
+  }
 }
 
 class Grid {
@@ -707,88 +729,12 @@ class Grid {
     }
   }
 }
-  
-class Health {
-  constructor(x, y, width, height) {
-    this.x = x;
-    this.y = y; 
-    this.width = width;
-    this.height = height;
-  }
-    
-  // Draw outline of the Bar
-  drawBar() {
-    stroke(0);
-    strokeWeight(2);
-    noFill();
-    rect(this.x, this.y, this.width, this.height);
-  }
-}
-  
-class playerH extends Health {
-  constructor(x, y) {
-    super(x, y, 40, 10);
-  }
-
-  changeColor() {
-    if (player.health < 25) {
-      fill(255, 0, 0);
-    }  
-    else if (player.health < 50) {
-      fill(255, 200, 0);
-    } 
-    else{
-      fill(0, 255, 0);
-    }
-  }
-  
-  updatePos(x, y) {
-    this.x = x;
-    this.y = y; 
-  }
-  
-  fillBar() {
-    noStroke();
-    let drawWidth = player.health*this.width / player.maxHealth;
-    rect(this.x, this.y, drawWidth, this.height);
-  }
-}
-  
-class enemyH extends Health {
-  constructor(x, y) {
-    super(x, y, 40, 10);
-  }
-  
-  changeColor() {
-    if (enemy.health < 40) {
-      fill(255, 0, 0);
-    }  
-    else if (enemy.health < 80) {
-      fill(255, 200, 0);
-    } 
-    else{
-      fill(0, 255, 0);
-    }
-  }
-
-  updatePos(x, y) {
-    this.x = x;
-    this.y = y; 
-  }
-  
-  fillBar() {
-    noStroke();
-    let drawWidth = enemy.health*this.width / enemy.maxHealth;
-    rect(this.x, this.y, drawWidth, this.height);
-  }
-}
 
 class Coins {
   constructor(x, y) {
     this.x = x;
     this.y = y;
     this.radius = 50;
-    this.score = 0;
     this.interact = false;
   }
   displayImg() {

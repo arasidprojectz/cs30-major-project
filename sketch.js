@@ -21,8 +21,6 @@ let pMoveUp = [];
 let pMoveDown = [];
 let pMoveLeft = [];
 let pMoveRight = [];
-// let playerHealthBar;
-// let enemyHealthBar;
 
 const WIDTH = 1050; 
 const HEIGHT = 750;
@@ -47,26 +45,26 @@ function loadAssets() {
     introBG: loadImage("assets/images/bg/intro_bg.jpg"),
     gameBG: loadImage("assets/images/bg/game_bg.jpg"),
 
-    cursorImg: loadImage("assets/images/items/cursor.png"),
-    inGameCursorImg: loadImage("assets/images/items/target.png"),
+    cursor: loadImage("assets/images/items/cursor.png"),
+    inGameCursor: loadImage("assets/images/items/target.png"),
 
-    gameTitleImg: loadImage("assets/images/text/game_title.png"),
+    gameTitle: loadImage("assets/images/text/game_title.png"),
     newGameTitle: loadImage("assets/images/text/new_game.png"),
     guideTitle: loadImage("assets/images/text/guide_title.png"),
     buttonH: loadImage("assets/images/button/button_h.png"),
     buttonNH: loadImage("assets/images/button/button_nh.png"),
 
-    enemyImg: loadImage("assets/images/enemy/enemy.png"),
-    bulletImg: loadImage("assets/images/items/fire_ball.png"),
-    boomerangImg: loadImage("assets/images/items/boomerang.png"),
-    coinImg: loadImage("assets/images/items/coin.png"),
+    enemy: loadImage("assets/images/enemy/enemy.png"),
+    bullet: loadImage("assets/images/items/fire_ball.png"),
+    boomerang: loadImage("assets/images/items/boomerang.png"),
+    coin: loadImage("assets/images/items/coin.png"),
     coinBag: loadImage("assets/images/items/coins_bag.png"), 
-    // deadCounter: loadImage("assets/images/items/dead_counter.png"),
+    deadCounter: loadImage("assets/images/items/dead_counter.png"),
     
-    grassImg: loadImage("assets/images/tiles/grass.png"),
-    groundImg: loadImage("assets/images/tiles/ground.jpg"),
-    stoneImg: loadImage("assets/images/tiles/stone.png"),
-    waterImg: loadImage("assets/images/tiles/water.png"),
+    grass: loadImage("assets/images/tiles/grass.png"),
+    ground: loadImage("assets/images/tiles/ground.jpg"),
+    stone: loadImage("assets/images/tiles/stone.png"),
+    water: loadImage("assets/images/tiles/water.png"),
   }; 
   
   sounds = { 
@@ -95,8 +93,6 @@ function newClasses() {
   player = new Player(width/2, height/2, 100);
   enemy = new Enemy(random(width), random(height), 100);
   grid = new Grid();
-  // playerHealthBar = new playerH(player.x, player.y);
-  // enemyHealthBar = new enemyH(enemy.x, enemy.y);
 }
 
 function setObjects() {
@@ -140,7 +136,8 @@ function setObjects() {
   };
 
   countScore = {
-
+    coins: 0,
+    kills: 0
   };
 }
 
@@ -171,15 +168,20 @@ function gameMode() {
     playerStates();
     createNewBullets();
     makeEnemies(); 
-    // makePlayerHealthBar();
-    // playerHealth();
+    playerHealth();
     makeCoins();
     removeCoins(); 
     bulletCollideWithEnemy();
     bulletCollideWithTile();
     removeBullet();
-    drawCounter();
+    updateScore();
     displayGameCursor();
+  }
+  
+  if (states.game === "gameOver") {
+    background(images.gameBG);
+    gameOver();
+    displayCursor();
   }
 }
 
@@ -190,11 +192,11 @@ function mouseMoved() { // if mouse move, cursorX and cursorY to mouseX and mous
 }
 
 function displayGameCursor() {
-  image(images.inGameCursorImg, gameSetup.cursorX, gameSetup.cursorY, gameSetup.cursorSize, gameSetup.cursorSize);
+  image(images.inGameCursor, gameSetup.cursorX, gameSetup.cursorY, gameSetup.cursorSize, gameSetup.cursorSize);
 }
 
 function displayCursor() {
-  image(images.cursorImg, gameSetup.cursorX, gameSetup.cursorY, gameSetup.cursorSize, gameSetup.cursorSize);
+  image(images.cursor, gameSetup.cursorX, gameSetup.cursorY, gameSetup.cursorSize, gameSetup.cursorSize);
 }
 
 function displayTitles() { // Display all titles in game
@@ -208,7 +210,7 @@ function displayTitles() { // Display all titles in game
   let gSideH = 50;
 
   imageMode(CENTER);
-  image(images.gameTitleImg, titleX, titleY, titleW, titleH); // Game Title
+  image(images.gameTitle, titleX, titleY, titleW, titleH); // Game Title
   image(images.newGameTitle, gameSetup.buttonX, gameSetup.buttonY + 20, nSideW, nSideH); // New Game Title
   image(images.guideTitle, gameSetup.buttonX, gameSetup.buttonY + 150, gSideW, gSideH); // Guide Title
 
@@ -280,7 +282,7 @@ function displayOptions() { // Display bullet options, if clicked, set bullet to
     rectMode(CENTER);
     rect(bX - 100, bY, rectSize, rectSize);
     imageMode(CENTER);
-    image(images.bulletImg, bX - 100, bY, bSize*1.2, bSize*1.2);
+    image(images.bullet, bX - 100, bY, bSize*1.2, bSize*1.2);
     pop();
     if (mouseIsPressed) {
       states.attack = bulletList[0];
@@ -297,7 +299,7 @@ function displayOptions() { // Display bullet options, if clicked, set bullet to
     rectMode(CENTER);
     rect(bX - 100, bY, rectSize, rectSize);
     imageMode(CENTER);
-    image(images.bulletImg, bX - 100, bY, bSize, bSize);
+    image(images.bullet, bX - 100, bY, bSize, bSize);
     pop();
   }
 
@@ -310,7 +312,7 @@ function displayOptions() { // Display bullet options, if clicked, set bullet to
     rectMode(CENTER);
     rect(bX + 100, bY, rectSize, rectSize);
     imageMode(CENTER);
-    image(images.boomerangImg, bX + 100, bY, bSize*1.5, bSize*1.5);
+    image(images.boomerang, bX + 100, bY, bSize*1.5, bSize*1.5);
     pop();
     if (mouseIsPressed) {
       states.attack = bulletList[1];
@@ -327,7 +329,7 @@ function displayOptions() { // Display bullet options, if clicked, set bullet to
     rectMode(CENTER);
     rect(bX + 100, bY, rectSize, rectSize);
     imageMode(CENTER);
-    image(images.boomerangImg, bX + 100, bY, bSize*1.25, bSize*1.25);
+    image(images.boomerang, bX + 100, bY, bSize*1.25, bSize*1.25);
     pop();
   }
 }
@@ -353,8 +355,7 @@ function createPlayer() {
 
 function playerHealth() {
   if (player.health <= 0) {
-    states.game = "toStart";
-    player.health = 100;
+    states.game = "gameOver";
   }
 }
 
@@ -442,6 +443,7 @@ function bulletCollideWithEnemy() {
       enemy.health -= 50;
       if (enemy.health <= 0) {
         coin.push(new Coins(enemy.x, enemy.y));
+        countScore.kills += 1;
         enemy = new Enemy(random(width), random(height), 100);
       }
     } 
@@ -450,7 +452,7 @@ function bulletCollideWithEnemy() {
 
 function makeCoins() {
   for (let i=0; i<coin.length; i++) {
-    coin[i].displayImg();
+    coin[i].display();
     coin[i].collisionWithPlayer();
   }
 }
@@ -459,8 +461,33 @@ function removeCoins() {
   for (let i=0; i<coin.length; i++) { 
     if (coin[i].interact === true) {
       coin.splice(i, 1);
+      countScore.coins += 1;
     }
   }
+}
+
+function updateScore() {
+  fill(255);
+  textSize(40);
+  text("Coins: " + countScore.coins, width/2, height - 20);
+  text("Kills: " + countScore.kills, width/2 + 200, height - 20);
+}
+
+function gameOver() {
+  fill(255);
+  textSize(40);
+  text("Coin Score: " + countScore.coins, width/2, height/2);
+  text("Kills Score: " + countScore.kills, width/2, height/2 + 80);
+  text("PRESS SPACE TO RESTART!", width/2, height/2 + 150);
+  if (keyIsPressed && keyCode === 32) {
+    states.game = "toStart";
+    countScore.coins = 0;
+    countScore.kills = 0;
+    player.health = 100;
+    player = new Player(width/2, height/2, 100);
+    enemy = new Enemy(random(width), random(height), 100);
+    coin = [];
+  } 
 }
 
 class Player {
@@ -628,7 +655,7 @@ class Fire extends Bullet {
   }
   
   displayBullets() { 
-    image(images.bulletImg, this.x, this.y, this.radius*2, this.radius*2);
+    image(images.bullet, this.x, this.y, this.radius*2, this.radius*2);
   }
 } 
   
@@ -640,7 +667,7 @@ class Boomerang extends Bullet {
   }
   
   displayBullets() {
-    image(images.boomerangImg, this.x, this.y, this.radius*2, this.radius*2);
+    image(images.boomerang, this.x, this.y, this.radius*2, this.radius*2);
   }
 }
 
@@ -660,7 +687,7 @@ class Enemy {
   
   displayEnemy() {
     imageMode(CENTER);
-    image(images.enemyImg, this.x, this.y, this.size, this.size);
+    image(images.enemy, this.x, this.y, this.size, this.size);
   }
     
   updatePosition() { // keep adding x through dx and y thorugh dy
@@ -714,16 +741,16 @@ class Grid {
     for (let x = 0; x < theCols; x++) { 
       for (let y = 0; y < theRows; y++) {
         if (this.myMap[y][x] === "G") { // Ground Tile
-          image(images.groundImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
+          image(images.ground, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
         }
         else if (this.myMap[y][x] === "S") { // Stone Tile
-          image(images.stoneImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
+          image(images.stone, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
         }
         else if (this.myMap[y][x] === "W") { // Wayer Tile
-          image(images.waterImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
+          image(images.water, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
         }
         else if (this.myMap[y][x] === ".") { // Grass Tile
-          image(images.grassImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
+          image(images.grass, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
         }
       }
     }
@@ -737,8 +764,8 @@ class Coins {
     this.radius = 50;
     this.interact = false;
   }
-  displayImg() {
-    image(images.coinImg, this.x, this.y, this.radius, this.radius);
+  display() {
+    image(images.coin, this.x, this.y, this.radius, this.radius);
   }
 
   // Check if player collide with coins, true, add one to coin score

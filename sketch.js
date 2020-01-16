@@ -15,16 +15,17 @@ let states;
 let bulletList;
 let grid;
 let player;
-let enemy;
+let viro;
+let treant;
 let coin = [];
 let bullets = [];
 let pMoveUp = [];
 let pMoveDown = [];
 let pMoveLeft = [];
 let pMoveRight = [];
+let eMoveLeft = [];
+let eMoveRight = [];
 
-const WIDTH = 1050; 
-const HEIGHT = 750;
 
 function preload() {
   loadAssets();
@@ -32,7 +33,7 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(WIDTH, HEIGHT);
+  createCanvas(windowWidth, windowHeight);
   setObjects();
   newClasses();
 }
@@ -45,6 +46,7 @@ function loadAssets() {
   images = { 
     introBG: loadImage("assets/images/bg/intro_bg.jpg"),
     gameBG: loadImage("assets/images/bg/game_bg.jpg"),
+    fightGround: loadImage("assets/images/bg/fight_ground.jpg"),
 
     cursor: loadImage("assets/images/items/cursor.png"),
     inGameCursor: loadImage("assets/images/items/target.png"),
@@ -55,12 +57,13 @@ function loadAssets() {
     buttonH: loadImage("assets/images/button/button_h.png"),
     buttonNH: loadImage("assets/images/button/button_nh.png"),
 
-    enemy: loadImage("assets/images/enemy/enemy.png"),
+    viro: loadImage("assets/images/enemy/viro.png"),
     bullet: loadImage("assets/images/items/fire_ball.png"),
     boomerang: loadImage("assets/images/items/boomerang.png"),
     coin: loadImage("assets/images/items/coin.png"),
     coinBag: loadImage("assets/images/items/coins_bag.png"), 
     deadCounter: loadImage("assets/images/items/dead_counter.png"),
+    potion: loadImage("assets/images/items/potionGreen.png"),
     
     grass: loadImage("assets/images/tiles/grass.png"),
     ground: loadImage("assets/images/tiles/ground.jpg"),
@@ -86,18 +89,35 @@ function loadAssets() {
 }
 
 function loadSprite() {
-  for (let i=0; i<9; i++) { //Idle
+  // Player
+  for (let i=0; i<9; i++) { 
     pMoveUp[i] = loadImage("assets/images/players/up_"+i+".png");
     pMoveDown[i] = loadImage("assets/images/players/down_"+i+".png");
     pMoveLeft[i] = loadImage("assets/images/players/left_"+i+".png");
     pMoveRight[i] = loadImage("assets/images/players/right_"+i+".png");
   }
+
+  // Enemy 
+  for (let i = 0; i < 4; i++) {
+    eMoveLeft[i] = loadImage("assets/images/enemy/left/walk_"+i+".png");
+    eMoveRight[i] = loadImage("assets/images/enemy/right/walk_"+i+".png");
+  }
+}
+
+function enemyState() {
+  if (states.enemyState === "eLeft") {
+    image(eMoveLeft[treant.index], treant.x, treant.y, treant.width, treant.height);
+  }
+  if (states.enemyState === "eRight") {
+    image(eMoveRight[treant.index], treant.x, treant.y, treant.width, treant.height);
+  }
 }
 
 function newClasses() {
   player = new Player(width/2, height/2, 100);
-  enemy = new Enemy(random(width), random(height), 100);
-  grid = new Grid();
+  treant = new Treant(random(width), random(height));
+  viro = new viroEnemy(random(width), random(height));
+
 }
 
 function setObjects() {
@@ -111,14 +131,17 @@ function setObjects() {
     buttonH: 200,
     counterImgX: 50, 
     counterImgY: 50,
+    potionW: 30, 
+    potionH: 60,
     coinBagW: 50,
     coinBagH: 65,
     killCounterSize: 60, 
   };
 
   states = {
-    game: "runGame",
+    game: "toStart",
     spriteState: "pDown",
+    enemyState: "eLeft",
     attack: " ",
     direction: " "
   };
@@ -176,16 +199,18 @@ function gameMode() {
   }
   
   if (states.game === "runGame") {
-    generateGrid();
+    background(images.fightGround);
     createPlayer();
     playerStates();
     createNewBullets();
-    makeEnemies(); 
+    makeTreant(); 
+    makeViroE();
+    enemyState();
     playerHealth();
     makeCoins();
     removeCoins(); 
-    bulletCollideWithEnemy();
-    bulletCollideWithTile();
+    bulletCollideWithViro();
+    bulletCollideWithTreant();
     removeBullet();
     scoreCounterImages();
     updateScore();
@@ -244,7 +269,6 @@ function gameGuide() { // Show guide, pressed esc to exit
     states.game = "toStart";
   }
 }
-
 
 function displayButtonOptions() { // Display buttons, if mouse pressed change state
   imageMode(CENTER);
@@ -306,6 +330,7 @@ function displayOptions() { // Display bullet options, if clicked, set bullet to
       text("FIRE SELECTED!", width/2, height/2 + 180);
     }
   }
+
   else {
     push();
     noFill();
@@ -336,6 +361,7 @@ function displayOptions() { // Display bullet options, if clicked, set bullet to
       text("BOOMERANG SELECTED!", width/2, height/2 + 180);
     }
   }
+
   else {
     push();
     noFill();
@@ -363,7 +389,6 @@ function selectNewBullets() {
 function createPlayer() {
   player.movePlayer();
   player.angleOfBullets(mouseY, mouseX);
-  player.collideWithTile();
   player.drawHealthBar();
   player.fillBar();
 }
@@ -394,7 +419,7 @@ function createNewBullets() {
   for (let i=0; i<bullets.length; i++) {
     bullets[i].displayBullets();
     bullets[i].shootBullets();
-    bullets[i].collideWithTile();
+    bullets[i].update();  
   }
 }
 
@@ -421,45 +446,52 @@ function removeBullet() {
   }
 }
 
-// Delete bullet if collide with not moveable tiles
-function bulletCollideWithTile() {
-  for (let i = 0; i<bullets.length; i++) {
-    if (bullets[i].isMoveable === true) {
-      bullets[i].update();  
-    }
-    else {
-      bullets.splice(i, 1);
-    }
-  }
-}
-
-// Get values from grid class and use them
-function generateGrid(){ 
-  grid.makeTileMap(grid.cols, grid.rows);
-}
-
 // Get Values from enemy class and use them
-function makeEnemies() {
-  enemy.displayEnemy();
-  enemy.updatePosition();
-  enemy.bounceEnemy();
-  enemy.interactWithPlayer();
-  enemy.drawHealthBar();
-  enemy.fillBar();
+function makeViroE() {
+  viro.displayEnemy();
+  viro.updatePosition();
+  viro.bounceEnemy();
+  viro.interactWithPlayer();
+  viro.drawHealthBar();
+  viro.fillBar();
+}
+
+function makeTreant() {
+  treant.move();
+  treant.teleport();
+  treant.interactWithPlayer();
+  treant.drawHealthBar();
+  treant.fillBar();
 }
 
 // Check if bullet and enemy collide, if true, delete bullet and enemy that collided
-function bulletCollideWithEnemy() {
+function bulletCollideWithViro() {
   for (let b=0; b<bullets.length; b++) {
-    setBoolean.bulletInteract = collideRectRect(enemy.x, enemy.y, enemy.size, enemy.size,
+    setBoolean.bulletInteract = collideRectRect(viro.x, viro.y, viro.size, viro.size,
       bullets[b].x, bullets[b].y, bullets[b].radius, bullets[b].radius);
     if (setBoolean.bulletInteract === true) {
       bullets.splice(b, 1);
-      enemy.health -= 50;
-      if (enemy.health <= 0) {
-        coin.push(new Coins(enemy.x, enemy.y));
+      viro.health -= 50;
+      if (viro.health <= 0) {
+        coin.push(new Coins(viro.x, viro.y));
         countScore.kills += 1;
-        enemy = new Enemy(random(width), random(height), 100);
+        viro = new viroEnemy(random(width), random(height));
+      }
+    } 
+  }
+}
+
+// Check if bullet and enemy collide, if true, delete bullet and enemy that collided
+function bulletCollideWithTreant() {
+  for (let b=0; b<bullets.length; b++) {
+    setBoolean.bulletInteract = collideRectRect(treant.x, treant.y, treant.width, treant.height,
+      bullets[b].x, bullets[b].y, bullets[b].radius, bullets[b].radius);
+    if (setBoolean.bulletInteract === true) {
+      bullets.splice(b, 1);
+      treant.health -= 50;
+      if (treant.health <= 0) {
+        countScore.kills += 1;
+        treant = new Treant(random(width), random(height));
       }
     } 
   }
@@ -491,8 +523,8 @@ function updateScore() {
   fill(255);
   textSize(40);
   textFont(fonts.theStyle);
-  text(countScore.coins, gameSetup.counterImgX+35, gameSetup.counterImgY+15);
-  text(countScore.kills, gameSetup.counterImgX+35, gameSetup.counterImgY+80);
+  text(countScore.coins, gameSetup.counterImgX+80, gameSetup.counterImgY+45);
+  text(countScore.kills, gameSetup.counterImgX+80, gameSetup.counterImgY+110);
 }
 
 function TimeSurvived() {
@@ -515,7 +547,7 @@ function gameOver() {
     countScore.kills = 0;
     player.health = 100;
     player = new Player(width/2, height/2, 100);
-    enemy = new Enemy(random(width), random(height), 100);
+    treant = new Treant(random(width), random(height), 100);
     coin = [];
   } 
 }
@@ -524,10 +556,10 @@ class Player {
   constructor(x, y, health) {
     this.x = x; 
     this.y = y;
-    this.dX = 10;
-    this.dY = 10; 
-    this.width = 30;
-    this.height = 50;
+    this.dX = 18;
+    this.dY = 18; 
+    this.width = 60;
+    this.height = 80;
     this.barWidth = 50; 
     this.barHeight = 10;
     this.aimAngle = 0;
@@ -548,37 +580,24 @@ class Player {
   // Check if the path is walkable or not
   movePlayer() { 
     if (keyIsDown(keyLetter.D) && this.x < width - this.width && frameCount % 10 === 0) {
-      states.direction = "right";
       states.spriteState = "pRight";
       this.index = (this.index + 1) % pMoveRight.length;
-      if (this.isWalkable === true) {
-        this.x += this.dX;
-      }
+      this.x += this.dX;
     } 
     else if (keyIsDown(keyLetter.A) && this.x > 0 && frameCount % 10 === 0) {
-      states.direction = "left";
       states.spriteState = "pLeft";
       this.index = (this.index + 1) % pMoveLeft.length;
-      if (this.isWalkable === true) {
-        this.x -= this.dX;
-      }
+      this.x -= this.dX;
     } 
     else if (keyIsDown(keyLetter.W) && this.y > 0 &&  frameCount % 10 === 0) {
-      states.direction = "up";
       states.spriteState = "pUp";
       this.index = (this.index + 1) % pMoveUp.length;
-      if (this.isWalkable === true) {
-        this.y -= this.dY;
-        this.isWalkable = false; 
-      }
+      this.y -= this.dY;
     } 
     else if (keyIsDown(keyLetter.S) && this.y < height - this.height && frameCount % 10 === 0) {
-      states.direction = "down";
       states.spriteState = "pDown";
       this.index = (this.index + 1) % pMoveDown.length;
-      if (this.isWalkable === true) { 
-        this.y += this.dY;
-      }
+      this.y += this.dY;
     }
   }
 
@@ -681,7 +700,7 @@ class Bullet {
 class Fire extends Bullet {
   constructor(pX, pY) {
     super(pX, pY);
-    this.radius = 8;
+    this.radius = 12;
   }
   
   displayBullets() { 
@@ -693,7 +712,7 @@ class Fire extends Bullet {
 class Boomerang extends Bullet {
   constructor(pX, pY) {
     super(pX, pY);
-    this.radius = 12;
+    this.radius = 15;
   }
   
   displayBullets() {
@@ -705,19 +724,73 @@ class Enemy {
   constructor(x, y, health) {
     this.x = x;
     this.y = y;
-    this.dX = random(0, 1); 
-    this.dY = random(0, 1);
-    this.size = 25;
     this.barWidth = 50; 
     this.barHeight = 8;
     this.health = health;
     this.maxHealth = health;
     this.playerInteract = false;
+  } 
+}
+
+class Treant extends Enemy {
+  constructor(x, y) {
+    super(x, y, 100);
+    this.index = 0;
+    this.width = 100;
+    this.height = 120;
+    this.dX = random(40, 60);
+  }
+
+  move() {
+    if (frameCount % 15 === 0) {
+      states.enemyState = "eRight";
+      this.index = (this.index + 1) % eMoveRight.length;
+      this.x += this.dX;
+    }
+  }
+
+  teleport() {
+    if (this.x+this.width > width) {
+      this.x = 0;
+      this.y = random(height);
+    }
   }
   
+  // Draw outline of the Bar
+  drawHealthBar() {
+    stroke(2);
+    strokeWeight(2);
+    noFill();
+    rect(this.x+30, this.y, this.barWidth, this.barHeight);
+  }
+  
+  fillBar() {
+    noStroke();
+    fill(225,25,25);
+    let drawWidth = this.health*this.barWidth / this.maxHealth;
+    rect(this.x+30, this.y, drawWidth, this.barHeight);
+  }
+
+  // Check if player collide with enemy, true, player health decrease one
+  interactWithPlayer() {
+    this.playerInteract = collideRectRect(this.x, this.y, this.width, this.height, player.x, player.y, player.width, player.height);
+    if (this.playerInteract === true) {
+      player.health -= 8;
+    } 
+  } 
+}
+
+class viroEnemy extends Enemy {
+  constructor(x, y) {
+    super(x, y, 100);
+    this.size = 20;
+    this.dX = random(3, 5); 
+    this.dY = random(3, 5);
+  }
+
   displayEnemy() {
     imageMode(CENTER);
-    image(images.enemy, this.x, this.y, this.size, this.size);
+    image(images.viro, this.x, this.y, this.size*2, this.size*2);
   }
     
   updatePosition() { // keep adding x through dx and y thorugh dy
@@ -733,28 +806,29 @@ class Enemy {
       this.dY *= -1;
     }
   }
-  // Check if player collide with enemy, true, player health decrease one
-  interactWithPlayer() {
-    this.playerInteract = collideRectRect(this.x, this.y, this.size, this.size, player.x, player.y, player.width, player.height);
-    if (this.playerInteract === true) {
-      player.health -= 10;
-    } 
-  }  
 
   // Draw outline of the Bar
   drawHealthBar() {
     stroke(2);
     strokeWeight(2);
     noFill();
-    rect(this.x-22, this.y-20, this.barWidth, this.barHeight);
+    rect(this.x-28, this.y-30, this.barWidth, this.barHeight);
   }
-  
+    
   fillBar() {
     noStroke();
     fill(225,25,25);
     let drawWidth = this.health*this.barWidth / this.maxHealth;
-    rect(this.x-22, this.y-20, drawWidth, this.barHeight);
+    rect(this.x-28, this.y-30, drawWidth, this.barHeight);
   }
+  
+  // Check if player collide with enemy, true, player health decrease one
+  interactWithPlayer() {
+    this.playerInteract = collideRectRect(this.x, this.y, this.size, this.size, player.x, player.y, player.width, player.height);
+    if (this.playerInteract === true) {
+      player.health -= 4;
+    } 
+  } 
 }
 
 class Grid {

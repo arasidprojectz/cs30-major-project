@@ -1,0 +1,23 @@
+body, html {
+    margin: 0;
+    height: 100%;
+    background: url(assets/images/bg/loading.jpg);
+    background-repeat: no-repeat;
+    background-size: 1050px;
+    background-attachment: fixed;
+}
+
+@font-face {
+    src: url(assets/font/Shojumaru-Regular.ttf);
+    font-family: Shojumaru;
+}
+
+.loadingText {
+    padding: 0px;
+    margin-top: 600px;
+    margin-left: 30px;
+    color: white;
+    font-size: 75px;
+    font-family: Shojumaru;
+    text-transform: uppercase;
+}

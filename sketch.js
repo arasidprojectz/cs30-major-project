@@ -126,6 +126,8 @@ function setObjects() {
     bulletTime: 400,
     respawnEnemy: 0,
     enemyTime: 2000,
+    survivedTime: 0,
+    addTimeSurvived: 1000
   };
 
   keyLetter = {
@@ -137,12 +139,17 @@ function setObjects() {
 
   countScore = {
     coins: 0,
-    kills: 0
+    kills: 0,
+    surviveTime: 0
   };
 }
 
 function gameMode() {
   imageMode(CORNER);
+  // if (states.game === "loadingScreen") {
+
+  // }
+
   if (states.game === "toStart") {
     background(images.introBG);
     displayButtonOptions();
@@ -175,6 +182,7 @@ function gameMode() {
     bulletCollideWithTile();
     removeBullet();
     updateScore();
+    TimeSurvived();
     displayGameCursor();
   }
   
@@ -461,7 +469,7 @@ function removeCoins() {
   for (let i=0; i<coin.length; i++) { 
     if (coin[i].interact === true) {
       coin.splice(i, 1);
-      countScore.coins += 1;
+      countScore.coins += floor(random(1, 5));
     }
   }
 }
@@ -473,11 +481,19 @@ function updateScore() {
   text("Kills: " + countScore.kills, width/2 + 200, height - 20);
 }
 
+function TimeSurvived() {
+  if (millis() > objectTime.survivedTime + objectTime.addTimeSurvived) {
+    countScore.surviveTime += 1;
+    objectTime.survivedTime = millis();
+  }
+}
+
 function gameOver() {
   fill(255);
   textSize(40);
-  text("Coin Score: " + countScore.coins, width/2, height/2);
-  text("Kills Score: " + countScore.kills, width/2, height/2 + 80);
+  text("Game Over! You Survived " + countScore.surviveTime + " Seconds", width/2, height/2-80);
+  text(countScore.coins + " Coins Collected", width/2, height/2);
+  text(countScore.kills + " Enemies Killed", width/2, height/2 + 80);
   text("PRESS SPACE TO RESTART!", width/2, height/2 + 150);
   if (keyIsPressed && keyCode === 32) {
     states.game = "toStart";
@@ -772,7 +788,7 @@ class Coins {
   collisionWithPlayer() {
     this.interact = collideRectRect(this.x, this.y, this.radius, this.radius, player.x, player.y, player.width, player.height);
     if (this.interact === true) {
-      this.score += 1;
+      this.score += floor(random(1, 5));
       // sounds.coinSound.setVolume(0.5);
       // sounds.coinSound.play();
     } 

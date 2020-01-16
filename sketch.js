@@ -10,6 +10,7 @@ let keyLetter;
 let images;
 let sounds;
 let strings;
+let fonts;
 let states;
 let bulletList;
 let grid;
@@ -78,6 +79,10 @@ function loadAssets() {
   strings = {
     tileLayout: loadStrings("assets/grid/forest.txt"),
   };
+  
+  fonts = {
+    theStyle: loadFont("assets/font/Fruktur-Regular.ttf"),
+  };
 }
 
 function loadSprite() {
@@ -104,10 +109,15 @@ function setObjects() {
     buttonY: height/2,
     buttonW: 400,
     buttonH: 200,
+    counterImgX: 50, 
+    counterImgY: 50,
+    coinBagW: 50,
+    coinBagH: 65,
+    killCounterSize: 60, 
   };
-  
+
   states = {
-    game: "toStart",
+    game: "runGame",
     spriteState: "pDown",
     attack: " ",
     direction: " "
@@ -146,10 +156,6 @@ function setObjects() {
 
 function gameMode() {
   imageMode(CORNER);
-  // if (states.game === "loadingScreen") {
-
-  // }
-
   if (states.game === "toStart") {
     background(images.introBG);
     displayButtonOptions();
@@ -181,6 +187,7 @@ function gameMode() {
     bulletCollideWithEnemy();
     bulletCollideWithTile();
     removeBullet();
+    scoreCounterImages();
     updateScore();
     TimeSurvived();
     displayGameCursor();
@@ -469,16 +476,23 @@ function removeCoins() {
   for (let i=0; i<coin.length; i++) { 
     if (coin[i].interact === true) {
       coin.splice(i, 1);
-      countScore.coins += floor(random(1, 5));
+      countScore.coins += floor(random(3, 6));
     }
   }
+}
+
+function scoreCounterImages() {
+  image(images.coinBag, gameSetup.counterImgX, gameSetup.counterImgY, gameSetup.coinBagW, gameSetup.coinBagH);
+  image(images.deadCounter, gameSetup.counterImgX, gameSetup.counterImgY+70, gameSetup.killCounterSize, gameSetup.killCounterSize);
+  
 }
 
 function updateScore() {
   fill(255);
   textSize(40);
-  text("Coins: " + countScore.coins, width/2, height - 20);
-  text("Kills: " + countScore.kills, width/2 + 200, height - 20);
+  textFont(fonts.theStyle);
+  text(countScore.coins, gameSetup.counterImgX+35, gameSetup.counterImgY+15);
+  text(countScore.kills, gameSetup.counterImgX+35, gameSetup.counterImgY+80);
 }
 
 function TimeSurvived() {
@@ -788,7 +802,7 @@ class Coins {
   collisionWithPlayer() {
     this.interact = collideRectRect(this.x, this.y, this.radius, this.radius, player.x, player.y, player.width, player.height);
     if (this.interact === true) {
-      this.score += floor(random(1, 5));
+      this.score += floor(random(3, 6));
       // sounds.coinSound.setVolume(0.5);
       // sounds.coinSound.play();
     } 

@@ -114,6 +114,7 @@ function enemyState() {
 }
 
 function newClasses() {
+  grid = new Grid();
   player = new Player(width/2, height/2, 100);
   treant = new Treant(random(width), random(height));
   viro = new viroEnemy(random(width), random(height));
@@ -199,14 +200,14 @@ function gameMode() {
   }
   
   if (states.game === "runGame") {
-    background(images.fightGround);
+    // background(images.fightGround);
     generateGrid();
     createPlayer();
     playerStates();
     createNewBullets();
-    makeTreant(); 
-    makeViroE();
-    enemyState();
+    // makeTreant(); 
+    // makeEnemies();
+    // enemyState();
     playerHealth();
     makeCoins();
     removeCoins(); 
@@ -465,7 +466,14 @@ function bulletCollideWithTile() {
 }
 
 // Get Values from enemy class and use them
-function makeViroE() {
+function makeEnemies() {
+  // treant
+  treant.move();
+  treant.teleport();
+  treant.interactWithPlayer();
+  treant.drawHealthBar();
+  treant.fillBar();
+  // Viro
   viro.displayEnemy();
   viro.updatePosition();
   viro.bounceEnemy();
@@ -474,13 +482,6 @@ function makeViroE() {
   viro.fillBar();
 }
 
-function makeTreant() {
-  treant.move();
-  treant.teleport();
-  treant.interactWithPlayer();
-  treant.drawHealthBar();
-  treant.fillBar();
-}
 
 // Check if bullet and enemy collide, if true, delete bullet and enemy that collided
 function bulletCollideWithViro() {
@@ -853,7 +854,7 @@ class Grid {
   constructor() {
     this.myMap = strings.tileLayout;
     this.cols = this.myMap.length;
-    this.rows = this.myMap[0].length-1;
+    this.rows = this.myMap[0].length;
     this.cellW = width/this.cols;
     this.cellH = height/this.rows;
   }
@@ -862,6 +863,9 @@ class Grid {
   makeTileMap(theCols, theRows) { 
     for (let x = 0; x < theCols; x++) { 
       for (let y = 0; y < theRows; y++) {
+        stroke(0);
+        strokeWeight(2);
+        rect(x * this.cellW, y * this.cellH, this.cellW, this.cellH);
         if (this.myMap[y][x] === "G") { // Ground Tile
           image(images.ground, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
         }
@@ -900,33 +904,3 @@ class Coins {
     } 
   } 
 }
-
-class Grid {
-  constructor() {
-    this.myMap = strings.tileLayout;
-    this.cols = this.myMap.length;
-    this.rows = this.myMap[0].length-1;
-    this.cellW = width/this.cols;
-    this.cellH = height/this.rows;
-  }
-
-  makeTileMap(theCols, theRows) { // Make the tiles size according to the cols and rows, and use value of strings 
-    for (let x = 0; x < theCols; x++) { 
-      for (let y = 0; y < theRows; y++) {
-        if (this.myMap[y][x] === "G") { // Ground Tile
-          image(images.groundImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
-        }
-        else if (this.myMap[y][x] === "S") { // Stone Tile
-          image(images.stoneImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
-        }
-        else if (this.myMap[y][x] === "W") { // Wayer Tile
-          image(images.waterImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
-        }
-        else if (this.myMap[y][x] === ".") { // Grass Tile
-          image(images.grassImg, x * this.cellW, y * this.cellH, this.cellW, this.cellH);
-        }
-      }
-    }
-  }
-}
-

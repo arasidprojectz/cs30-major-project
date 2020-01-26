@@ -13,10 +13,7 @@ let strings;
 let fonts;
 let states;
 let bulletList;
-let grid;
-let tiles;
-let tileWidth;
-let tileHeight;
+let map;
 let player;
 let viro;
 let treant;
@@ -42,8 +39,7 @@ function setup() {
   createCanvas(WIDTH, HEIGHT);
   setObjects();
   newClasses();
-  tiles = createEmpty2dArray(grid.tilesWide, grid.tilesHigh);
-
+  map.createEmpty2dArray();
 }
 
 function draw() {
@@ -122,10 +118,10 @@ function enemyState() {
 }
 
 function newClasses() {
-  // grid = new Grid();
   player = new Player(width/2, height/2, 100);
   treant = new Treant(random(width), random(height));
   viro = new viroEnemy(random(width), random(height));
+  map = new Map();
 
 }
 
@@ -185,10 +181,10 @@ function setObjects() {
     surviveTime: 0
   };
 
-  grid = {
-    tilesHigh: strings.tileLayout.length,
-    tilesWide: strings.tileLayout[0].length,
-  };
+  // grid = {
+  //   tilesHigh: strings.tileLayout.length,
+  //   tilesWide: strings.tileLayout[0].length,
+  // };
 }
 
 function gameMode() {
@@ -213,13 +209,10 @@ function gameMode() {
   }
   
   if (states.game === "runGame") {
-    // background(images.fightGround);
-    displayTiles();
-    addValueToTiles();
+    generateMap();
     createPlayer();
     playerStates();
     createNewBullets();
-    // makeTreant(); 
     // makeEnemies();
     // enemyState();
     playerHealth();
@@ -402,54 +395,8 @@ function selectNewBullets() {
   }
 }
 
-function displayTiles() {
-  for (let y = 0; y < grid.tilesHigh; y++) {
-    for (let x = 0; x < grid.tilesWide; x++) {
-      showTile(tiles[x][y], x, y);
-    }
-  }
-}
-
-function addValueToTiles() {
-  //put values into 2d array of characters
-  for (let y = 0; y < grid.tilesHigh; y++) {
-    for (let x = 0; x < grid.tilesWide; x++) {
-      let tileType = strings.tileLayout[y][x];
-      tiles[x][y] = tileType;
-    }
-  }
-}
-
-function showTile(location, x, y) {
-  tileWidth = width / grid.tilesWide;
-  tileHeight = height / grid.tilesHigh;
-
-  stroke(0);
-  strokeWeight(2);
-  rect(x * tileWidth, y * tileHeight, tileWidth, tileHeight);
-  if (location === "G") {
-    image(images.ground, x * tileWidth, y * tileHeight, tileWidth, tileHeight);
-  }
-  else if (location === "S") {
-    image(images.stone, x * tileWidth, y * tileHeight, tileWidth, tileHeight);
-  }
-  else if (location === "W") {
-    image(images.water, x * tileWidth, y * tileHeight, tileWidth, tileHeight);
-  }
-  else if (location === ".") {
-    image(images.grass, x * tileWidth, y * tileHeight, tileWidth, tileHeight);
-  }
-}
-
-function createEmpty2dArray(cols, rows) {
-  let randomGrid = [];
-  for (let x = 0; x < cols; x++) {
-    randomGrid.push([]);
-    for (let y = 0; y < rows; y++) {
-      randomGrid[x].push(0);
-    }
-  }
-  return randomGrid;
+function generateMap() {
+  map.makeTileMap(map.cols, map.rows);
 }
 
 // Get values from player class and use them in player
@@ -487,7 +434,6 @@ function createNewBullets() {
   for (let i=0; i<bullets.length; i++) {
     bullets[i].displayBullets();
     bullets[i].shootBullets();
-    bullets[i].update();  
     bullets[i].collideWithTile();
   }
 }
@@ -660,75 +606,83 @@ class Player {
   // Move using WASD && can not go off screen
   // Check if the path is walkable or not
   movePlayer() { 
-    if (keyIsDown(keyLetter.D) && this.x < width - this.width && frameCount % 10 === 0) {
-      states.spriteState = "pRight";
-      this.index = (this.index + 1) % pMoveRight.length;
-      if (this.isWalkable) {
-        this.x += this.dX;
-      }
-    } 
-    else if (keyIsDown(keyLetter.A) && this.x > 0 && frameCount % 10 === 0) {
-      states.spriteState = "pLeft";
-      this.index = (this.index + 1) % pMoveLeft.length;
-      if (this.isWalkable) {
-        this.x -= this.dX;
-      }
-    } 
-    else if (keyIsDown(keyLetter.W) && this.y > 0 &&  frameCount % 10 === 0) {
+    if (keyIsDown(keyLetter.W) && this.y > 0 &&  frameCount % 10 === 0) {
       states.spriteState = "pUp";
-      this.index = (this.index + 1) % pMoveUp.length;
+      states.direction = "up";
       if (this.isWalkable) {
+        this.index = (this.index + 1) % pMoveUp.length;
         this.y -= this.dY;
       }
     } 
     else if (keyIsDown(keyLetter.S) && this.y < height - this.height && frameCount % 10 === 0) {
       states.spriteState = "pDown";
-      this.index = (this.index + 1) % pMoveDown.length;
+      states.direction = "down";
       if (this.isWalkable) {
+        this.index = (this.index + 1) % pMoveDown.length;
         this.y += this.dY;
       }
     }
+    else if (keyIsDown(keyLetter.D) && this.x < width - this.width && frameCount % 10 === 0) {
+      states.spriteState = "pRight";
+      states.direction = "right";
+      if (this.isWalkable) {
+        this.index = (this.index + 1) % pMoveRight.length;
+        this.x += this.dX;
+      }
+    } 
+    else if (keyIsDown(keyLetter.A) && this.x > 0 && frameCount % 10 === 0) {
+      states.spriteState = "pLeft";
+      states.direction = "left";
+      if (this.isWalkable) {
+        this.index = (this.index + 1) % pMoveLeft.length;
+        this.x -= this.dX;
+      }
+    } 
   }
-
+  
   // Check the tile if the tile is walkable
   collideWithTile() { 
-    tileWidth = width / grid.tilesWide;
-    tileHeight = height / grid.tilesHigh;
-
     if (states.direction === "up") { // Top tile colision
-      let gridX = floor((this.x + this.width/2)/tileWidth);
-      let gridY = floor(this.y/tileHeight); 
-      if (tiles[gridY][gridX] === "." || tiles[gridY][gridX] === "G") {
+      let gridX = floor((this.x + this.width/2)/map.width);
+      let gridY = floor(this.y/map.height); 
+      console.log(gridX, gridX);
+      if (map.myMap[gridY][gridX] === "." || map.myMap[gridY][gridX] === "G") {
         this.isWalkable = true;
       }
       else {
         this.isWalkable = false;
       }
     }
+
     else if (states.direction === "down") { // Down tile colision
-      let gridX = floor((this.x + this.width/2)/tileWidth);
-      let gridY = floor((this.y + this.height)/tileHeight); 
-      if (tiles[gridY][gridX] === "." || tiles[gridY][gridX] === "G") {
+      let gridX = floor((this.x + this.width/2)/map.width);
+      let gridY = floor((this.y + this.height)/map.height); 
+      console.log(gridX, gridX);
+      if (map.myMap[gridY][gridX] === "." || map.myMap[gridY][gridX] === "G") {
         this.isWalkable = true;
       }
       else {
         this.isWalkable = false;
       }
     }
+
     else if (states.direction === "left") { // Left tile colision
-      let gridX = floor((this.x )/tileWidth);
-      let gridY = floor((this.y + this.height/2)/tileHeight); 
-      if (tiles[gridY][gridX] === "." || tiles[gridY][gridX] === "G") {
+      let gridX = floor((this.x)/map.width);
+      let gridY = floor((this.y + this.height/2)/map.height); 
+      console.log(gridX, gridX);
+      if (map.myMap[gridY][gridX] === "." || map.myMap[gridY][gridX] === "G") {
         this.isWalkable = true;
       }
       else {
         this.isWalkable = false;
       }
     }
+
     else if (states.direction === "right") { // Right tile colision
-      let gridX = floor((this.x+this.width)/tileWidth);
-      let gridY = floor((this.y + this.height/2)/tileHeight); 
-      if (tiles[gridY][gridX] === "." || tiles[gridY][gridX] === "G") {
+      let gridX = floor((this.x+this.width)/map.width);
+      let gridY = floor((this.y + this.height/2)/map.height); 
+      console.log(gridX, gridX);
+      if (map.myMap[gridY][gridX] === "." || map.myMap[gridY][gridX] === "G") {
         this.isWalkable = true;
       }
       else {
@@ -777,12 +731,9 @@ class Bullet {
   }
   
   collideWithTile() {
-    tileWidth = width / grid.tilesWide;
-    tileHeight = height / grid.tilesHigh;
-
-    let gridX = floor(this.x/tileWidth);
-    let gridY = floor(this.y/tileHeight); 
-    if (tiles[gridY][gridX] === "." || tiles[gridY][gridX] === "G") {
+    let gridX = floor(this.x/map.width);
+    let gridY = floor(this.y/map.height); 
+    if (map.myMap[gridY][gridX] === "." || map.myMap[gridY][gridX] === "G") {
       this.isMoveable = true;
     }
     else {
@@ -946,4 +897,47 @@ class Coins {
       // sounds.coinSound.play();
     } 
   } 
+}
+
+class Map {
+  constructor() {
+    this.myMap = strings.tileLayout;
+    this.cols = this.myMap.length;
+    this.rows = this.myMap[0].length-1;
+    this.width = width/this.cols;
+    this.height = height/this.rows;
+  }
+
+  makeTileMap(theCols, theRows) { // Make the tiles size according to the cols and rows, and use value of strings 
+    for (let x = 0; x < theCols; x++) { 
+      for (let y = 0; y < theRows; y++) {
+        stroke(0);
+        strokeWeight(2);
+        rect(x * this.width, y * this.height, this.width, this.height);
+        if (this.myMap[y][x] === "G") { // Ground Tile
+          image(images.ground, x * this.width, y * this.height, this.width, this.height);
+        }
+        else if (this.myMap[y][x] === "S") { // Stone Tile
+          image(images.stone, x * this.width, y * this.height, this.width, this.height);
+        }
+        else if (this.myMap[y][x] === "W") { // Wayer Tile
+          image(images.water, x * this.width, y * this.height, this.width, this.height);
+        }
+        else if (this.myMap[y][x] === ".") { // Grass Tile
+          image(images.grass, x * this.width, y * this.height, this.width, this.height);
+        }
+      }
+    }
+  }
+
+  createEmpty2dArray() {
+    let randomGrid = [];
+    for (let x = 0; x < this.cols; x++) {
+      randomGrid.push([]);
+      for (let y = 0; y < this.rows; y++) {
+        randomGrid[x].push(0);
+      }
+    }
+    return randomGrid;
+  }
 }

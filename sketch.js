@@ -1,6 +1,9 @@
 // CS30 Major Project
 // Al Rasid Mamun
 // Jan 27, 2020
+// Extra for Experts:
+//  - Sprite Animation (Player and Enemy)
+//  - Generate tilemaps (Have better layouts)
 
 let gameSetup;
 let setBoolean;
@@ -21,12 +24,10 @@ let userName;
 let input;
 let coin = [];
 let bullets = [];
-
 let pMoveUp = [];
 let pMoveDown = [];
 let pMoveLeft = [];
 let pMoveRight = [];
-
 let eMoveUp = [];
 let eMoveDown = [];
 let eMoveLeft = [];
@@ -118,6 +119,7 @@ function loadSprite() {
   }
 }
 
+// Declaring new classes
 function newClasses() {
   map = new Map();
   player = new Player(gameSetup.widthCenterd, gameSetup.heightCenterd, 100);
@@ -180,6 +182,7 @@ function setObjects() {
   };
 }
 
+// Check the states of game
 function gameMode() {
   imageMode(CORNER);
   if (states.game === "toStart") {
@@ -214,7 +217,7 @@ function gameMode() {
     makeEnemies();
     enemyState();
     playerHealth();
-    makeCoins();
+    newCoins();
     removeCoins(); 
     bulletCollideWithTreant();
     removeBullet();
@@ -232,21 +235,25 @@ function gameMode() {
   }
 }
 
+// Cursor Images follow the mouse 
 function mouseMoved() {
   noCursor();
   gameSetup.cursorX = mouseX;
   gameSetup.cursorY = mouseY;
 }
 
+// Display Cursor
 function displayGameCursor() {
   image(images.inGameCursor, gameSetup.cursorX, gameSetup.cursorY, gameSetup.cursorSize, gameSetup.cursorSize);
 }
 
+// Display Cursor
 function displayCursor() {
   image(images.cursor, gameSetup.cursorX, gameSetup.cursorY, gameSetup.cursorSize, gameSetup.cursorSize);
 }
 
-function displayTitles() { // Display all titles in game
+// Display all titles in game
+function displayTitles() { 
   let titleX = width/2; 
   let titleY = height/5; 
   let titleW = 750; 
@@ -257,13 +264,16 @@ function displayTitles() { // Display all titles in game
   let gSideH = 50;
 
   imageMode(CENTER);
-  image(images.gameTitle, titleX, titleY, titleW, titleH); // Game Title
-  image(images.newGameTitle, gameSetup.widthCenterd, gameSetup.heightCenterd + 20, nSideW, nSideH); // New Game Title
-  image(images.guideTitle, gameSetup.widthCenterd, gameSetup.heightCenterd + 150, gSideW, gSideH); // Guide Title
+  // Game Title
+  image(images.gameTitle, titleX, titleY, titleW, titleH); 
+  // New Game Title
+  image(images.newGameTitle, gameSetup.widthCenterd, gameSetup.heightCenterd + 20, nSideW, nSideH);
+  // Guide Title
+  image(images.guideTitle, gameSetup.widthCenterd, gameSetup.heightCenterd + 150, gSideW, gSideH);
 
 }
 
-function gameGuide() { // Show guide
+function gameGuide() { // Show Instructions
   textAlign(CENTER, CENTER);
   fill(255);
   textSize(50);
@@ -426,12 +436,14 @@ function createPlayer() {
   player.collideWithTile();
 }
 
+// Game over when player health reach to zero
 function playerHealth() {
   if (player.health <= 0) {
     states.game = "gameOver";
   }
 }
 
+// Iterate through array of images
 function playerStates() {
   if (states.spriteState === "pUp") {
     image(pMoveUp[player.index], player.x, player.y, player.width, player.height);
@@ -501,6 +513,7 @@ function makeEnemies() {
   treant.interactWithPlayer();
 }
 
+// Iterate through array of images
 function enemyState() {
   if (states.enemyState === "eUp") {
     image(eMoveUp[treant.index], treant.x, treant.y, treant.width, treant.height);
@@ -533,13 +546,15 @@ function bulletCollideWithTreant() {
   }
 }
 
-function makeCoins() {
+// Get Values from enemy class and use them
+function newCoins() {
   for (let i=0; i<coin.length; i++) {
     coin[i].display();
     coin[i].collisionWithPlayer();
   }
 }
 
+// Delete coins if collision equal to true
 function removeCoins() {
   for (let i=0; i<coin.length; i++) { 
     if (coin[i].interact === true) {
@@ -549,13 +564,14 @@ function removeCoins() {
   }
 }
 
+// Display score counter images
 function scoreCounterImages() {
-  // image(CORNER);
   image(images.coinBag, gameSetup.counterImgX, gameSetup.counterImgY, gameSetup.coinBagW, gameSetup.coinBagH);
   image(images.deadCounter, gameSetup.counterImgX, gameSetup.counterImgY+70, gameSetup.killCounterSize, gameSetup.killCounterSize);
   
 }
 
+// Keep track of score
 function updateScore() {
   fill(255);
   textSize(40);
@@ -564,6 +580,7 @@ function updateScore() {
   text(countScore.kills, gameSetup.counterImgX+80, gameSetup.counterImgY+110);
 }
 
+// Keep track of time of survived
 function TimeSurvived() {
   if (millis() > objectTime.survivedTime + objectTime.addTimeSurvived) {
     countScore.surviveTime += 1;
@@ -571,6 +588,7 @@ function TimeSurvived() {
   }
 }
 
+// Game over and reset every object
 function gameOver() {
   fill(255);
   textSize(40);
@@ -736,6 +754,7 @@ class Bullet {
     this.dY = player.bulletDistance * sin(this.angle)*8;
   }
   
+  // Check if bullet collide with tiles
   collideWithTile() {
     let gridX = floor(this.x/map.width);
     let gridY = floor(this.y/map.height); 
@@ -796,6 +815,7 @@ class Treant extends Enemy {
     this.dY = 20;
   }
 
+  // Check if enemy collide with tiles
   collideWithTile() {
     let gridX = floor(this.x/map.width);
     let gridY = floor(this.y/map.height); 
@@ -824,6 +844,7 @@ class Treant extends Enemy {
     }
   }
 
+  // Move Enemy if the path is walkable
   move() {
     if (this.direction === "up" && frameCount % 15 === 0) {
       states.enemyState = "eUp";
@@ -898,8 +919,6 @@ class Coins {
     this.interact = collideRectRect(this.x, this.y, this.radius, this.radius, player.x, player.y, player.width, player.height);
     if (this.interact === true) {
       this.score += floor(random(3, 6));
-      // sounds.coinSound.setVolume(0.5);
-      // sounds.coinSound.play();
     } 
   } 
 }

@@ -1,6 +1,6 @@
 // CS30 Major Project
 // Al Rasid Mamun
-// Jan 6, 2020
+// Jan 27, 2020
 
 let gameSetup;
 let setBoolean;
@@ -17,17 +17,23 @@ let map;
 let player;
 let viro;
 let treant;
+let userName;
+let input;
 let coin = [];
 let bullets = [];
+
 let pMoveUp = [];
 let pMoveDown = [];
 let pMoveLeft = [];
 let pMoveRight = [];
+
+let eMoveUp = [];
+let eMoveDown = [];
 let eMoveLeft = [];
 let eMoveRight = [];
 
 const WIDTH = 900; 
-const HEIGHT = 600; 
+const HEIGHT = 640; 
 
 
 function preload() {
@@ -48,19 +54,21 @@ function draw() {
 
 function loadAssets() {
   images = { 
-    introBG: loadImage("assets/images/bg/intro_bg.jpg"),
-    gameBG: loadImage("assets/images/bg/game_bg.jpg"),
+    // Background 
+    introBG: loadImage("assets/images/bg/loading.jpg"),
+    homeBG: loadImage("assets/images/bg/home.jpg"),
+    gameBG: loadImage("assets/images/bg/option.jpg"),
     fightGround: loadImage("assets/images/bg/fight_ground.jpg"),
-
+    // Cursors 
     cursor: loadImage("assets/images/items/cursor.png"),
     inGameCursor: loadImage("assets/images/items/target.png"),
-
+    // Game Titles
     gameTitle: loadImage("assets/images/text/game_title.png"),
     newGameTitle: loadImage("assets/images/text/new_game.png"),
     guideTitle: loadImage("assets/images/text/guide_title.png"),
     buttonH: loadImage("assets/images/button/button_h.png"),
     buttonNH: loadImage("assets/images/button/button_nh.png"),
-
+    // Items
     viro: loadImage("assets/images/enemy/viro.png"),
     bullet: loadImage("assets/images/items/fire_ball.png"),
     boomerang: loadImage("assets/images/items/boomerang.png"),
@@ -68,7 +76,7 @@ function loadAssets() {
     coinBag: loadImage("assets/images/items/coins_bag.png"), 
     deadCounter: loadImage("assets/images/items/dead_counter.png"),
     potion: loadImage("assets/images/items/potionGreen.png"),
-    
+    // Tiles
     grass: loadImage("assets/images/tiles/grass.png"),
     ground: loadImage("assets/images/tiles/ground.jpg"),
     stone: loadImage("assets/images/tiles/stone.png"),
@@ -103,50 +111,40 @@ function loadSprite() {
 
   // Enemy 
   for (let i = 0; i < 4; i++) {
+    eMoveUp[i] = loadImage("assets/images/enemy/up/walk_"+i+".png");
+    eMoveDown[i] = loadImage("assets/images/enemy/down/walk_"+i+".png");
     eMoveLeft[i] = loadImage("assets/images/enemy/left/walk_"+i+".png");
     eMoveRight[i] = loadImage("assets/images/enemy/right/walk_"+i+".png");
   }
 }
 
-function enemyState() {
-  if (states.enemyState === "eLeft") {
-    image(eMoveLeft[treant.index], treant.x, treant.y, treant.width, treant.height);
-  }
-  if (states.enemyState === "eRight") {
-    image(eMoveRight[treant.index], treant.x, treant.y, treant.width, treant.height);
-  }
-}
-
 function newClasses() {
-  player = new Player(width/2, height/2, 100);
-  treant = new Treant(random(width), random(height));
-  viro = new viroEnemy(random(width), random(height));
   map = new Map();
-
+  player = new Player(gameSetup.widthCenterd, gameSetup.heightCenterd, 100);
+  treant = new Treant(random(width), random(height));
 }
 
 function setObjects() {
   gameSetup = {
-    cursorX: width/2, 
-    cursorY: height/2, 
+    widthCenterd: width/2, 
+    heightCenterd: height/2, 
+    cursorX: 0,
+    cursorY: 0,
     cursorSize: 25,
-    buttonX: width/2, 
-    buttonY: height/2,
     buttonW: 400,
     buttonH: 200,
-    counterImgX: 50, 
-    counterImgY: 50,
-    potionW: 30, 
-    potionH: 60,
+    counterImgX: 0, 
+    counterImgY: 0,
     coinBagW: 50,
     coinBagH: 65,
     killCounterSize: 60, 
+    counter: 0,
   };
 
   states = {
     game: "toStart",
     spriteState: "pDown",
-    enemyState: "eLeft",
+    enemyState: "eDown",
     attack: " ",
     direction: " "
   };
@@ -180,45 +178,44 @@ function setObjects() {
     kills: 0,
     surviveTime: 0
   };
-
-  // grid = {
-  //   tilesHigh: strings.tileLayout.length,
-  //   tilesWide: strings.tileLayout[0].length,
-  // };
 }
 
 function gameMode() {
   imageMode(CORNER);
   if (states.game === "toStart") {
-    background(images.introBG);
+    background(images.homeBG);
     displayButtonOptions();
     displayTitles();
     displayCursor();
   }
+
+  else if (states.game === "gameIntro") {
+    background(images.introBG);
+    gameIntroText();
+  }
   
-  if (states.game === "guide") {
+  else if (states.game === "guide") {
     background(images.gameBG);
     gameGuide();
   }
   
-  if (states.game === "bulletList") {
+  else if (states.game === "bulletList") {
     background(images.gameBG);
     toStartGame();
     displayOptions();
     displayCursor();
   }
   
-  if (states.game === "runGame") {
+  else if (states.game === "runGame") {
     generateMap();
     createPlayer();
     playerStates();
     createNewBullets();
-    // makeEnemies();
-    // enemyState();
+    makeEnemies();
+    enemyState();
     playerHealth();
     makeCoins();
     removeCoins(); 
-    bulletCollideWithViro();
     bulletCollideWithTreant();
     removeBullet();
     bulletCollideWithTile();
@@ -228,14 +225,14 @@ function gameMode() {
     displayGameCursor();
   }
   
-  if (states.game === "gameOver") {
+  else if (states.game === "gameOver") {
     background(images.gameBG);
     gameOver();
     displayCursor();
   }
 }
 
-function mouseMoved() { // if mouse move, cursorX and cursorY to mouseX and mouseY
+function mouseMoved() {
   noCursor();
   gameSetup.cursorX = mouseX;
   gameSetup.cursorY = mouseY;
@@ -252,8 +249,8 @@ function displayCursor() {
 function displayTitles() { // Display all titles in game
   let titleX = width/2; 
   let titleY = height/5; 
-  let titleW = 800; 
-  let titleH = 250;
+  let titleW = 750; 
+  let titleH = 200;
   let nSideW = 250; 
   let nSideH = 50;
   let gSideW = 180; 
@@ -261,20 +258,22 @@ function displayTitles() { // Display all titles in game
 
   imageMode(CENTER);
   image(images.gameTitle, titleX, titleY, titleW, titleH); // Game Title
-  image(images.newGameTitle, gameSetup.buttonX, gameSetup.buttonY + 20, nSideW, nSideH); // New Game Title
-  image(images.guideTitle, gameSetup.buttonX, gameSetup.buttonY + 150, gSideW, gSideH); // Guide Title
+  image(images.newGameTitle, gameSetup.widthCenterd, gameSetup.heightCenterd + 20, nSideW, nSideH); // New Game Title
+  image(images.guideTitle, gameSetup.widthCenterd, gameSetup.heightCenterd + 150, gSideW, gSideH); // Guide Title
 
 }
 
-function gameGuide() { // Show guide, pressed esc to exit
+function gameGuide() { // Show guide
   textAlign(CENTER, CENTER);
   fill(255);
+  textSize(50);
+  text("VIROTTACK LAND", width/2, height/2 - 80);
   textSize(30);
-  text("VIROTTACK", width/2, height/2 - 80);
   text("Move Player Using WASD", width/2, height/2 - 40);
   text("Mouse to Aim", width/2, height/2);
   text("Left Mouse Button to Shoot", width/2, height/2 + 40);
   text("PRESS ESC TO EXIT!", width/2, height/2 + 80);
+  // Pressed esc to exit
   if (keyIsPressed && keyCode === 27) {
     states.game = "toStart";
   }
@@ -284,24 +283,43 @@ function displayButtonOptions() { // Display buttons, if mouse pressed change st
   imageMode(CENTER);
   if (mouseX > width/2 - 180 && mouseX < width/2 + 210 &&
     mouseY > height/2 && mouseY < height/2 + 80) {
-    image(images.buttonH, gameSetup.buttonX, gameSetup.buttonY + 20, gameSetup.buttonW, gameSetup.buttonH);
+    image(images.buttonH, gameSetup.widthCenterd, gameSetup.heightCenterd + 20, gameSetup.buttonW, gameSetup.buttonH);
     if (mouseIsPressed) {
-      states.game = "bulletList";
+      states.game = "gameIntro";
     }
   }
+
   else {
-    image(images.buttonNH, gameSetup.buttonX, gameSetup.buttonY + 20, gameSetup.buttonW, gameSetup.buttonH);
+    image(images.buttonNH, gameSetup.widthCenterd, gameSetup.heightCenterd + 20, gameSetup.buttonW, gameSetup.buttonH);
   }
     
   if (mouseX > width/2 - 180 && mouseX < width/2 + 210 &&
     mouseY > height/2 + 125 && mouseY < height/2 + 200) {
-    image(images.buttonH, gameSetup.buttonX, gameSetup.buttonY + 150, gameSetup.buttonW, gameSetup.buttonH);
+    image(images.buttonH, gameSetup.widthCenterd, gameSetup.heightCenterd + 150, gameSetup.buttonW, gameSetup.buttonH);
     if (mouseIsPressed) {
       states.game = "guide";
     }
   }
+
   else {
-    image(images.buttonNH, gameSetup.buttonX, gameSetup.buttonY + 150, gameSetup.buttonW, gameSetup.buttonH);
+    image(images.buttonNH, gameSetup.widthCenterd, gameSetup.heightCenterd + 150, gameSetup.buttonW, gameSetup.buttonH);
+  }
+}
+
+function gameIntroText() {
+  fill(255);
+  let introText = ["HELLO! (PRESS SPACE KEY TO CONTINUE)", "NEED YOUR HELP TO SAVE THE WORLD FROM VIRO", "AND, WE ARE RUNNING OUT OF TIME!", "COME, THERE IS LOTS TO SHOW YOU"];
+  textFont(fonts.theStyle);
+  textSize(30);
+  text(introText[gameSetup.counter], gameSetup.widthCenterd-350, gameSetup.heightCenterd+300);
+}
+
+function keyPressed() {
+  if (states.game === "gameIntro" && keyCode === 32) {
+    gameSetup.counter++;
+    if (gameSetup.counter >= 4) {
+      states.game = "bulletList";
+    }
   }
 }
 
@@ -309,7 +327,7 @@ function toStartGame() { // Draw text, if key pressed, game start
   textAlign(CENTER);
   fill(255);
   textSize(30);
-  text("Select an Option", width/2, height/2 - 100);
+  text("Select A Weapon", width/2, height/2 - 100);
   text("PRESS ENTER TO START!", width/2, height/2 + 120);
   if (keyIsPressed && keyCode === 13) {
     states.game = "runGame";
@@ -475,36 +493,26 @@ function bulletCollideWithTile() {
 
 // Get Values from enemy class and use them
 function makeEnemies() {
-  // treant
+  // Treant
   treant.move();
-  treant.teleport();
-  treant.interactWithPlayer();
+  treant.collideWithTile();
   treant.drawHealthBar();
   treant.fillBar();
-  // Viro
-  viro.displayEnemy();
-  viro.updatePosition();
-  viro.bounceEnemy();
-  viro.interactWithPlayer();
-  viro.drawHealthBar();
-  viro.fillBar();
+  treant.interactWithPlayer();
 }
 
-
-// Check if bullet and enemy collide, if true, delete bullet and enemy that collided
-function bulletCollideWithViro() {
-  for (let b=0; b<bullets.length; b++) {
-    setBoolean.bulletInteract = collideRectRect(viro.x, viro.y, viro.size, viro.size,
-      bullets[b].x, bullets[b].y, bullets[b].radius, bullets[b].radius);
-    if (setBoolean.bulletInteract === true) {
-      bullets.splice(b, 1);
-      viro.health -= 50;
-      if (viro.health <= 0) {
-        coin.push(new Coins(viro.x, viro.y));
-        countScore.kills += 1;
-        viro = new viroEnemy(random(width), random(height));
-      }
-    } 
+function enemyState() {
+  if (states.enemyState === "eUp") {
+    image(eMoveUp[treant.index], treant.x, treant.y, treant.width, treant.height);
+  }
+  if (states.enemyState === "eDown") {
+    image(eMoveDown[treant.index], treant.x, treant.y, treant.width, treant.height);
+  }
+  if (states.enemyState === "eLeft") {
+    image(eMoveLeft[treant.index], treant.x, treant.y, treant.width, treant.height);
+  }
+  if (states.enemyState === "eRight") {
+    image(eMoveRight[treant.index], treant.x, treant.y, treant.width, treant.height);
   }
 }
 
@@ -517,6 +525,7 @@ function bulletCollideWithTreant() {
       bullets.splice(b, 1);
       treant.health -= 50;
       if (treant.health <= 0) {
+        coin.push(new Coins(treant.x, treant.y));
         countScore.kills += 1;
         treant = new Treant(random(width), random(height));
       }
@@ -541,6 +550,7 @@ function removeCoins() {
 }
 
 function scoreCounterImages() {
+  // image(CORNER);
   image(images.coinBag, gameSetup.counterImgX, gameSetup.counterImgY, gameSetup.coinBagW, gameSetup.coinBagH);
   image(images.deadCounter, gameSetup.counterImgX, gameSetup.counterImgY+70, gameSetup.killCounterSize, gameSetup.killCounterSize);
   
@@ -607,32 +617,32 @@ class Player {
   // Check if the path is walkable or not
   movePlayer() { 
     if (keyIsDown(keyLetter.W) && this.y > 0 &&  frameCount % 10 === 0) {
-      states.spriteState = "pUp";
       states.direction = "up";
+      states.spriteState = "pUp";
       if (this.isWalkable) {
         this.index = (this.index + 1) % pMoveUp.length;
         this.y -= this.dY;
       }
     } 
     else if (keyIsDown(keyLetter.S) && this.y < height - this.height && frameCount % 10 === 0) {
-      states.spriteState = "pDown";
       states.direction = "down";
+      states.spriteState = "pDown";
       if (this.isWalkable) {
         this.index = (this.index + 1) % pMoveDown.length;
         this.y += this.dY;
       }
     }
     else if (keyIsDown(keyLetter.D) && this.x < width - this.width && frameCount % 10 === 0) {
-      states.spriteState = "pRight";
       states.direction = "right";
+      states.spriteState = "pRight";
       if (this.isWalkable) {
         this.index = (this.index + 1) % pMoveRight.length;
         this.x += this.dX;
       }
     } 
     else if (keyIsDown(keyLetter.A) && this.x > 0 && frameCount % 10 === 0) {
-      states.spriteState = "pLeft";
       states.direction = "left";
+      states.spriteState = "pLeft";
       if (this.isWalkable) {
         this.index = (this.index + 1) % pMoveLeft.length;
         this.x -= this.dX;
@@ -644,8 +654,7 @@ class Player {
   collideWithTile() { 
     if (states.direction === "up") { // Top tile colision
       let gridX = floor((this.x + this.width/2)/map.width);
-      let gridY = floor(this.y/map.height); 
-      console.log(gridX, gridX);
+      let gridY = floor((this.y - 10)/map.height); 
       if (map.myMap[gridY][gridX] === "." || map.myMap[gridY][gridX] === "G") {
         this.isWalkable = true;
       }
@@ -656,8 +665,7 @@ class Player {
 
     else if (states.direction === "down") { // Down tile colision
       let gridX = floor((this.x + this.width/2)/map.width);
-      let gridY = floor((this.y + this.height)/map.height); 
-      console.log(gridX, gridX);
+      let gridY = floor((this.y + this.height + 10)/map.height); 
       if (map.myMap[gridY][gridX] === "." || map.myMap[gridY][gridX] === "G") {
         this.isWalkable = true;
       }
@@ -667,9 +675,8 @@ class Player {
     }
 
     else if (states.direction === "left") { // Left tile colision
-      let gridX = floor((this.x)/map.width);
+      let gridX = floor((this.x+10)/map.width);
       let gridY = floor((this.y + this.height/2)/map.height); 
-      console.log(gridX, gridX);
       if (map.myMap[gridY][gridX] === "." || map.myMap[gridY][gridX] === "G") {
         this.isWalkable = true;
       }
@@ -681,7 +688,6 @@ class Player {
     else if (states.direction === "right") { // Right tile colision
       let gridX = floor((this.x+this.width)/map.width);
       let gridY = floor((this.y + this.height/2)/map.height); 
-      console.log(gridX, gridX);
       if (map.myMap[gridY][gridX] === "." || map.myMap[gridY][gridX] === "G") {
         this.isWalkable = true;
       }
@@ -775,6 +781,8 @@ class Enemy {
     this.health = health;
     this.maxHealth = health;
     this.playerInteract = false;
+    this.isWalkable = false;
+    this.direction = " ";
   } 
 }
 
@@ -782,23 +790,71 @@ class Treant extends Enemy {
   constructor(x, y) {
     super(x, y, 100);
     this.index = 0;
-    this.width = 100;
-    this.height = 120;
-    this.dX = random(40, 60);
+    this.width = 50;
+    this.height = 60;
+    this.dX = 20;
+    this.dY = 20;
   }
 
-  move() {
-    if (frameCount % 15 === 0) {
-      states.enemyState = "eRight";
-      this.index = (this.index + 1) % eMoveRight.length;
-      this.x += this.dX;
+  collideWithTile() {
+    let gridX = floor(this.x/map.width);
+    let gridY = floor(this.y/map.height); 
+
+    if (map.myMap[gridY-1][gridX] === ".") {
+      this.direction = "up";
+      this.isWalkable = true;
+    }
+
+    else if (map.myMap[gridY+1][gridX] === ".") {
+      this.direction = "down";
+      this.isWalkable = true;
+    }
+   
+    else if (map.myMap[gridY][gridX-1] === ".") {
+      this.direction = "left";
+      this.isWalkable = true;
+    } 
+
+    else if (map.myMap[gridY][gridX+1] === ".") {
+      this.direction = "right";
+      this.isWalkable = true;
+    }
+    else {
+      this.isWalkable = false;
     }
   }
 
-  teleport() {
-    if (this.x+this.width > width) {
-      this.x = 0;
-      this.y = random(height);
+  move() {
+    if (this.direction === "up" && frameCount % 15 === 0) {
+      states.enemyState = "eUp";
+      if (this.isWalkable) {
+        this.index = (this.index + 1) % eMoveUp.length;
+        this.y -= this.dY;
+      }
+    }
+
+    else if (this.direction === "down" && frameCount % 15 === 0) {
+      states.enemyState = "eDown";
+      if (this.isWalkable) {
+        this.index = (this.index + 1) % eMoveDown.length;
+        this.y += this.dY;
+      }
+    }
+
+    else if (this.direction === "left" && frameCount % 15 === 0) {
+      states.enemyState = "eLeft";
+      if (this.isWalkable) {
+        this.index = (this.index + 1) % eMoveLeft.length;
+        this.x -= this.dX;
+      }
+    }
+
+    else if (this.direction === "right" && frameCount % 15 === 0) {
+      states.enemyState = "eRight";
+      if (this.isWalkable) {
+        this.index = (this.index + 1) % eMoveRight.length;
+        this.x += this.dX;
+      }
     }
   }
   
@@ -821,58 +877,7 @@ class Treant extends Enemy {
   interactWithPlayer() {
     this.playerInteract = collideRectRect(this.x, this.y, this.width, this.height, player.x, player.y, player.width, player.height);
     if (this.playerInteract === true) {
-      player.health -= 8;
-    } 
-  } 
-}
-
-class viroEnemy extends Enemy {
-  constructor(x, y) {
-    super(x, y, 100);
-    this.size = 20;
-    this.dX = random(3, 5); 
-    this.dY = random(3, 5);
-  }
-
-  displayEnemy() {
-    imageMode(CENTER);
-    image(images.viro, this.x, this.y, this.size*2, this.size*2);
-  }
-    
-  updatePosition() { // keep adding x through dx and y thorugh dy
-    this.x += this.dX; 
-    this.y += this.dY;
-  }
-
-  // Image Bounce at Edges, if needed so, doesn't go off screen
-  bounceEnemy() {
-    if (this.x > width - this.size || this.x < 0) {
-      this.dX *= -1;
-    } if (this.y > height - this.size || this.y < 0) {
-      this.dY *= -1;
-    }
-  }
-
-  // Draw outline of the Bar
-  drawHealthBar() {
-    stroke(2);
-    strokeWeight(2);
-    noFill();
-    rect(this.x-28, this.y-30, this.barWidth, this.barHeight);
-  }
-    
-  fillBar() {
-    noStroke();
-    fill(225,25,25);
-    let drawWidth = this.health*this.barWidth / this.maxHealth;
-    rect(this.x-28, this.y-30, drawWidth, this.barHeight);
-  }
-  
-  // Check if player collide with enemy, true, player health decrease one
-  interactWithPlayer() {
-    this.playerInteract = collideRectRect(this.x, this.y, this.size, this.size, player.x, player.y, player.width, player.height);
-    if (this.playerInteract === true) {
-      player.health -= 4;
+      player.health -= 2;
     } 
   } 
 }
@@ -881,11 +886,11 @@ class Coins {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.radius = 50;
+    this.radius = 14;
     this.interact = false;
   }
   display() {
-    image(images.coin, this.x, this.y, this.radius, this.radius);
+    image(images.coin, this.x, this.y, this.radius*2, this.radius*2);
   }
 
   // Check if player collide with coins, true, add one to coin score

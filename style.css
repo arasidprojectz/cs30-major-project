@@ -3,7 +3,7 @@ body, html {
     height: 100%;
     background: url(assets/images/bg/loading.jpg);
     background-repeat: no-repeat;
-    background-size: 100%;
+    background-size: 900px;
     background-attachment: fixed;
 }
 
@@ -14,7 +14,7 @@ body, html {
 
 .loadingText {
     padding: 0px;
-    margin-top: 600px;
+    margin-top: 500px;
     margin-left: 30px;
     color: white;
     font-size: 75px;

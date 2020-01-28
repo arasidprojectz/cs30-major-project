@@ -13,19 +13,18 @@ I am going to be creating a game that will be 2D RPG (Top Down) game. There will
     - Survival time
     - Coin collected
     - Count Kills 
-- Sprite Animation 
 - Guide for user
 - Health system for player/enemy
 - Add more sounds effect/images
 
 ## Nice to Have List
+- Sprite Animation 
 - Inventory system 
     - store/drop medkit, chest box
-- Shop Class 
+- Shop  
     - Powers-up
     - Weapons
         - Various Weapons
-        - Level system
 - Game Mode 
     - Single/Multiplayer
     - Day/Night
